@@ -26,6 +26,4 @@ COPY --from=build-frontend /app/frontend/dist /frontend/dist
 ENV PYTHONUNBUFFERED=1 \
     ENVIRONMENT=production
 
-EXPOSE 8000
-
 CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}

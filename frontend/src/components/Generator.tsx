@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import ThemeSelector from './ThemeSelector';
 import DistanceSlider from './DistanceSlider';
 import StatusDisplay from './StatusDisplay';
+import PosterMockup from './PosterMockup';
 import type { Theme } from '@/lib/api';
 import { fetchThemes, generatePoster, fetchStatus } from '@/lib/api';
 
@@ -39,6 +40,7 @@ export default function Generator() {
   const [email, setEmail] = useState('');
   const [appState, setAppState] = useState<AppState>('default');
   const [errorMessage, setErrorMessage] = useState('');
+  const [posterUrl, setPosterUrl] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -62,6 +64,7 @@ export default function Generator() {
         const status = await fetchStatus(jobId);
         if (status.status === 'completed') {
           if (pollingRef.current) clearInterval(pollingRef.current);
+          if (status.poster_url) setPosterUrl(status.poster_url);
           setAppState('completed');
         } else if (status.status === 'failed') {
           if (pollingRef.current) clearInterval(pollingRef.current);
@@ -101,6 +104,7 @@ export default function Generator() {
     setCountry('');
     setEmail('');
     setErrorMessage('');
+    setPosterUrl(null);
   };
 
   const handleRetry = () => {
@@ -206,44 +210,11 @@ export default function Generator() {
                     className="w-72 h-96 rounded-lg overflow-hidden shadow-xl border border-[#E5E7EB]"
                   >
                     {selectedTheme && (
-                      <div className="w-full h-full flex flex-col">
-                        <div
-                          className="flex-1 flex items-center justify-center"
-                          style={{ backgroundColor: selectedTheme.preview_colors[0] }}
-                        >
-                          <div className="w-32 h-32 opacity-20">
-                            <svg viewBox="0 0 100 100" fill="none" stroke={selectedTheme.preview_colors[3]} strokeWidth="0.5">
-                              {Array.from({ length: 20 }, (_, i) => (
-                                <line key={`h${i}`} x1="0" y1={i * 5} x2="100" y2={i * 5} />
-                              ))}
-                              {Array.from({ length: 20 }, (_, i) => (
-                                <line key={`v${i}`} x1={i * 5} y1="0" x2={i * 5} y2="100" />
-                              ))}
-                              <circle cx="50" cy="50" r="20" />
-                              <line x1="20" y1="30" x2="80" y2="30" />
-                              <line x1="30" y1="20" x2="30" y2="80" />
-                              <line x1="25" y1="60" x2="75" y2="40" />
-                            </svg>
-                          </div>
-                        </div>
-                        <div
-                          className="p-4"
-                          style={{ backgroundColor: selectedTheme.preview_colors[3] }}
-                        >
-                          <p
-                            className="text-xs tracking-widest uppercase opacity-60"
-                            style={{ color: selectedTheme.preview_colors[0] }}
-                          >
-                            {city || 'Your City'}
-                          </p>
-                          <p
-                            className="text-sm font-semibold mt-1"
-                            style={{ color: selectedTheme.preview_colors[0] }}
-                          >
-                            {selectedTheme.name}
-                          </p>
-                        </div>
-                      </div>
+                      <PosterMockup
+                        colors={selectedTheme.preview_colors}
+                        cityName={city || 'Your City'}
+                        className="w-full h-full"
+                      />
                     )}
                   </motion.div>
                 </AnimatePresence>
@@ -253,6 +224,7 @@ export default function Generator() {
             <StatusDisplay
               state={appState}
               city={city}
+              posterUrl={posterUrl}
               errorMessage={errorMessage}
               onRetry={handleRetry}
               onReset={handleReset}

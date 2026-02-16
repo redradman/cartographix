@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { fetchGallery, GalleryItem } from '@/lib/api';
+import { fetchGallery } from '@/lib/api';
+import type { GalleryItem } from '@/lib/api';
 
 function SkeletonCard() {
   return (

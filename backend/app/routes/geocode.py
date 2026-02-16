@@ -38,8 +38,8 @@ async def geocode(q: str = Query(..., min_length=2)) -> List[GeocodeSuggestion]:
         async with httpx.AsyncClient(timeout=5.0) as client:
             resp = await client.get(
                 NOMINATIM_URL,
-                params={"q": q, "format": "json", "limit": 5, "addressdetails": 1},
-                headers={"User-Agent": USER_AGENT},
+                params={"q": q, "format": "json", "limit": 5, "addressdetails": 1, "accept-language": "en"},
+                headers={"User-Agent": USER_AGENT, "Accept-Language": "en"},
             )
             resp.raise_for_status()
     except httpx.HTTPError:

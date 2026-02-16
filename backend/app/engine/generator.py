@@ -168,16 +168,14 @@ def generate_poster(
             fontsize=28,
             fontweight="bold",
             color=primary_color,
-            pad=20,
+            pad=10,
             fontfamily="sans-serif",
         )
 
-        ax.margins(0.02)
+        ax.margins(0)
         ax.axis("off")
 
         # Enforce the desired aspect ratio by adjusting axis limits
-        # Without this, bbox_inches="tight" would crop to the graph's
-        # natural (roughly square) extent, ignoring the figsize.
         fig_w, fig_h = figsize
         target_ratio = fig_w / fig_h  # width / height
         x_min, x_max = ax.get_xlim()
@@ -187,18 +185,22 @@ def generate_poster(
         data_ratio = data_w / data_h
 
         if data_ratio < target_ratio:
-            # Need wider x — expand x limits
             new_w = data_h * target_ratio
             x_center = (x_min + x_max) / 2
             ax.set_xlim(x_center - new_w / 2, x_center + new_w / 2)
         else:
-            # Need taller y — expand y limits
             new_h = data_w / target_ratio
             y_center = (y_min + y_max) / 2
             ax.set_ylim(y_center - new_h / 2, y_center + new_h / 2)
 
-        # Make axes fill the figure, leaving only top space for the title
-        fig.subplots_adjust(left=0.02, right=0.98, bottom=0.02, top=0.92)
+        # Override equal aspect set by ox.plot_graph — since we already
+        # fetch street data matching the output format's aspect ratio and
+        # enforce axis limits above, 'auto' lets the map fill the axes
+        # without matplotlib letterboxing it (which causes excess whitespace).
+        ax.set_aspect("auto")
+
+        # Make axes fill the figure, leaving minimal space for the title
+        fig.subplots_adjust(left=0, right=1, bottom=0, top=0.95)
 
         # Save to file
         filename = f"{city.lower().replace(' ', '_')}_{theme}_{uuid.uuid4().hex[:8]}.png"

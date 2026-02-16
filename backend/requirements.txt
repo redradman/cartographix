@@ -1,0 +1,8 @@
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+pydantic==2.10.4
+pydantic-settings==2.7.1
+osmnx==2.0.1
+matplotlib==3.10.0
+resend==2.5.0
+python-multipart==0.0.20

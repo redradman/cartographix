@@ -202,9 +202,10 @@ def generate_poster(
                     clip_on=True,
                 )
 
-        fig.subplots_adjust(left=0, right=1, bottom=0.18, top=1)
+        # Map fills the entire figure — no reserved whitespace
+        fig.subplots_adjust(left=0, right=1, bottom=0, top=1)
 
-        # Text rendering — MapToPoster style (bottom of poster)
+        # Text overlay on map — MapToPoster style
         scale_factor = min(fig_w, fig_h) / 12.0
         base_main = 60
         base_sub = 22
@@ -239,13 +240,13 @@ def generate_poster(
         if aspect_ratio < 1.0:
             adjusted_main *= max(aspect_ratio, 0.5)
 
-        ax.text(0.5, 0.14, spaced_title, transform=ax.transAxes,
+        ax.text(0.5, 0.08, spaced_title, transform=ax.transAxes,
                 color=primary_color, ha="center", va="center",
                 fontsize=adjusted_main, fontweight="bold", fontfamily="monospace", zorder=11)
 
         country_text = country.upper() if country else ""
         if country_text:
-            ax.text(0.5, 0.10, country_text, transform=ax.transAxes,
+            ax.text(0.5, 0.05, country_text, transform=ax.transAxes,
                     color=primary_color, ha="center", va="center",
                     fontsize=base_sub * scale_factor, fontfamily="monospace", zorder=11)
 
@@ -253,12 +254,12 @@ def generate_poster(
         lat_dir = "N" if lat >= 0 else "S"
         lng_dir = "E" if lng >= 0 else "W"
         coords_text = f"{abs(lat):.4f}° {lat_dir}, {abs(lng):.4f}° {lng_dir}"
-        ax.text(0.5, 0.07, coords_text, transform=ax.transAxes,
+        ax.text(0.5, 0.025, coords_text, transform=ax.transAxes,
                 color=primary_color, alpha=0.7, ha="center", va="center",
                 fontsize=base_coords * scale_factor, fontfamily="monospace", zorder=11)
 
         # Attribution
-        ax.text(0.98, 0.02, "© OpenStreetMap contributors", transform=ax.transAxes,
+        ax.text(0.98, 0.005, "© OpenStreetMap contributors", transform=ax.transAxes,
                 color=primary_color, alpha=0.5, ha="right", va="bottom",
                 fontsize=base_attr * scale_factor, fontfamily="monospace", zorder=11)
 

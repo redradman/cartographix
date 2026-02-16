@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import ThemeSelector from './ThemeSelector';
 import DistanceSlider from './DistanceSlider';
 import StatusDisplay from './StatusDisplay';
+import Toast from './Toast';
 import PosterMockup from './PosterMockup';
 import type { Theme } from '@/lib/api';
 import { fetchThemes, generatePoster, fetchStatus } from '@/lib/api';
@@ -41,7 +42,9 @@ export default function Generator() {
   const [appState, setAppState] = useState<AppState>('default');
   const [errorMessage, setErrorMessage] = useState('');
   const [posterUrl, setPosterUrl] = useState<string | null>(null);
+  const [stage, setStage] = useState<string | undefined>(undefined);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [toastVisible, setToastVisible] = useState(false);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -56,19 +59,19 @@ export default function Generator() {
     };
   }, []);
 
-  const isValidEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
-
   const pollStatus = useCallback((jobId: string) => {
     pollingRef.current = setInterval(async () => {
       try {
         const status = await fetchStatus(jobId);
+        if (status.stage) setStage(status.stage);
         if (status.status === 'completed') {
           if (pollingRef.current) clearInterval(pollingRef.current);
           if (status.poster_url) setPosterUrl(status.poster_url);
           setAppState('completed');
+          setToastVisible(true);
         } else if (status.status === 'failed') {
           if (pollingRef.current) clearInterval(pollingRef.current);
-          setErrorMessage('Generation failed. Try again with a different city or smaller distance.');
+          setErrorMessage(status.error_message || 'Generation failed. Try again with a different city or smaller distance.');
           setAppState('error');
         }
       } catch {
@@ -80,7 +83,7 @@ export default function Generator() {
   }, []);
 
   const handleGenerate = async () => {
-    if (!city.trim() || !isValidEmail(email)) return;
+    if (!city.trim()) return;
     setIsSubmitting(true);
     try {
       const result = await generatePoster({ city, country, theme, distance, email });
@@ -105,6 +108,8 @@ export default function Generator() {
     setEmail('');
     setErrorMessage('');
     setPosterUrl(null);
+    setStage(undefined);
+    setToastVisible(false);
   };
 
   const handleRetry = () => {
@@ -113,7 +118,7 @@ export default function Generator() {
   };
 
   const selectedTheme = themes.find((t) => t.id === theme);
-  const canSubmit = city.trim().length > 0 && isValidEmail(email) && !isSubmitting;
+  const canSubmit = city.trim().length > 0 && !isSubmitting;
 
   return (
     <section id="generator" className="py-24 px-6">
@@ -166,13 +171,14 @@ export default function Generator() {
 
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-sm font-medium text-[#0A0A0A]">
-                    Email
+                    Email <span className="text-[#9CA3AF] font-normal">(optional)</span>
                   </Label>
                   <Input
                     id="email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Optional — we'll email you a copy too"
                     className="border-[#E5E7EB] rounded-lg px-4 py-3 focus:border-[#0A0A0A] focus:ring-[#0A0A0A]/10"
                   />
                 </div>
@@ -224,6 +230,8 @@ export default function Generator() {
             <StatusDisplay
               state={appState}
               city={city}
+              stage={stage}
+              email={email}
               posterUrl={posterUrl}
               errorMessage={errorMessage}
               onRetry={handleRetry}
@@ -232,6 +240,11 @@ export default function Generator() {
           )}
         </AnimatePresence>
       </div>
+      <Toast
+        message={`Your poster of ${city} is ready!`}
+        visible={toastVisible}
+        onClose={() => setToastVisible(false)}
+      />
     </section>
   );
 }

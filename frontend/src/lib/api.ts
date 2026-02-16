@@ -23,6 +23,9 @@ export interface StatusResponse {
   status: 'queued' | 'processing' | 'completed' | 'failed';
   city: string;
   theme: string;
+  poster_url?: string;
+  stage?: string;
+  error_message?: string;
 }
 
 export async function fetchThemes(): Promise<Theme[]> {

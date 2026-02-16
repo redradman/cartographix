@@ -5,6 +5,9 @@ type AppState = 'default' | 'generating' | 'completed' | 'error' | 'rate_limited
 interface StatusDisplayProps {
   state: AppState;
   city: string;
+  stage?: string;
+  email?: string;
+  posterUrl?: string | null;
   errorMessage?: string;
   onRetry: () => void;
   onReset: () => void;
@@ -51,7 +54,26 @@ function Checkmark() {
   );
 }
 
-export default function StatusDisplay({ state, city, errorMessage, onRetry, onReset }: StatusDisplayProps) {
+function getStageMessage(stage: string | undefined, city: string): string {
+  switch (stage) {
+    case 'geocoding': return `Locating ${city} on the map...`;
+    case 'fetching_streets': return 'Fetching street data...';
+    case 'rendering': return 'Rendering your poster...';
+    case 'sending_email': return 'Sending to your inbox...';
+    case 'done': return 'Almost there...';
+    default: return `Creating your poster of ${city}...`;
+  }
+}
+
+export default function StatusDisplay({ state, city, stage, email, posterUrl, errorMessage, onRetry, onReset }: StatusDisplayProps) {
+  const handleDownload = () => {
+    if (!posterUrl) return;
+    const link = document.createElement('a');
+    link.href = posterUrl;
+    link.download = `${city.toLowerCase().replace(/\s+/g, '_')}_poster.png`;
+    link.click();
+  };
+
   return (
     <AnimatePresence mode="wait">
       {state === 'generating' && (
@@ -64,7 +86,7 @@ export default function StatusDisplay({ state, city, errorMessage, onRetry, onRe
         >
           <Spinner />
           <p className="text-[#6B7280] text-center">
-            Creating your poster of <span className="font-semibold text-[#0A0A0A]">{city}</span>...
+            {getStageMessage(stage, city)}
           </p>
           <p className="text-sm text-[#9CA3AF]">This usually takes about a minute</p>
         </motion.div>
@@ -81,13 +103,37 @@ export default function StatusDisplay({ state, city, errorMessage, onRetry, onRe
           <Checkmark />
           <div className="text-center">
             <p className="text-lg font-semibold text-[#0A0A0A]">
-              Your poster of {city} is on its way!
+              Your poster of {city} is ready!
             </p>
-            <p className="text-[#6B7280] mt-2">Check your email.</p>
+            {email && <p className="text-[#6B7280] mt-2">We've also sent it to your email.</p>}
           </div>
+
+          {posterUrl && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.5 }}
+              className="mt-4 w-full max-w-md"
+            >
+              <div className="rounded-lg overflow-hidden shadow-xl border border-[#E5E7EB]">
+                <img
+                  src={posterUrl}
+                  alt={`Map poster of ${city}`}
+                  className="w-full h-auto"
+                />
+              </div>
+              <button
+                onClick={handleDownload}
+                className="mt-4 w-full py-3 border-2 border-[#0A0A0A] text-[#0A0A0A] rounded-lg font-medium hover:bg-[#0A0A0A] hover:text-white transition-all hover:-translate-y-0.5 active:scale-[0.98]"
+              >
+                Download poster
+              </button>
+            </motion.div>
+          )}
+
           <button
             onClick={onReset}
-            className="mt-4 px-6 py-3 bg-[#0A0A0A] text-white rounded-lg font-medium hover:bg-[#1a1a1a] transition-all hover:-translate-y-0.5 active:scale-[0.98]"
+            className="mt-2 px-6 py-3 bg-[#0A0A0A] text-white rounded-lg font-medium hover:bg-[#1a1a1a] transition-all hover:-translate-y-0.5 active:scale-[0.98]"
           >
             Create another
           </button>

@@ -61,6 +61,7 @@ function getStageMessage(stage: string | undefined, city: string): string {
   switch (stage) {
     case 'geocoding': return `Locating ${city} on the map...`;
     case 'fetching_streets': return 'Fetching street data...';
+    case 'fetching_features': return 'Fetching water & parks...';
     case 'rendering': return 'Rendering your poster...';
     case 'sending_email': return 'Sending to your inbox...';
     case 'done': return 'Almost there...';

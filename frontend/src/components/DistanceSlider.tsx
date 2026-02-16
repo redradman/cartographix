@@ -22,7 +22,7 @@ export default function DistanceSlider({ value, onChange }: DistanceSliderProps)
       </div>
       <Slider
         min={1000}
-        max={50000}
+        max={35000}
         step={1000}
         value={[value]}
         onValueChange={([v]) => onChange(v)}
@@ -30,7 +30,7 @@ export default function DistanceSlider({ value, onChange }: DistanceSliderProps)
       />
       <div className="flex justify-between text-xs text-[#9CA3AF] dark:text-[#6B7280]">
         <span>1 km</span>
-        <span>50 km</span>
+        <span>35 km</span>
       </div>
     </div>
   );

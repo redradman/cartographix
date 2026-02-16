@@ -222,7 +222,7 @@ def generate_poster(
     figsize = preset["figsize"]
     fig_w, fig_h = figsize
 
-    effective_distance = min(distance, 20000)
+    effective_distance = min(distance, 35000)
     compensated_dist = int(effective_distance * (max(fig_h, fig_w) / min(fig_h, fig_w)) / 4)
 
     center_point = (lat, lng)

@@ -6,6 +6,7 @@ import CityAutocomplete from './CityAutocomplete';
 import ThemeSelector from './ThemeSelector';
 import ThemeSkeleton from './ThemeSkeleton';
 import DistanceSlider from './DistanceSlider';
+import FormatSelector from './FormatSelector';
 import StatusDisplay from './StatusDisplay';
 import Toast from './Toast';
 import PosterMockup from './PosterMockup';
@@ -41,6 +42,9 @@ export default function Generator() {
   const [theme, setTheme] = useState('default');
   const [distance, setDistance] = useState(10000);
   const [email, setEmail] = useState('');
+  const [outputFormat, setOutputFormat] = useState('square');
+  const [customTitle, setCustomTitle] = useState('');
+  const [jobId, setJobId] = useState<string | null>(null);
   const [appState, setAppState] = useState<AppState>('default');
   const [errorMessage, setErrorMessage] = useState('');
   const [posterUrl, setPosterUrl] = useState<string | null>(null);
@@ -90,7 +94,8 @@ export default function Generator() {
     if (!city.trim()) return;
     setIsSubmitting(true);
     try {
-      const result = await generatePoster({ city, country, theme, distance, email });
+      const result = await generatePoster({ city, country, theme, distance, email, output_format: outputFormat, custom_title: customTitle });
+      setJobId(result.job_id);
       setAppState('generating');
       pollStatus(result.job_id);
     } catch (err) {
@@ -110,6 +115,9 @@ export default function Generator() {
     setCity('');
     setCountry('');
     setEmail('');
+    setOutputFormat('square');
+    setCustomTitle('');
+    setJobId(null);
     setErrorMessage('');
     setPosterUrl(null);
     setStage(undefined);
@@ -182,6 +190,24 @@ export default function Generator() {
 
                 <DistanceSlider value={distance} onChange={setDistance} />
 
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium text-[#0A0A0A] dark:text-[#F9FAFB]">Output format</Label>
+                  <FormatSelector selected={outputFormat} onSelect={setOutputFormat} />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="custom-title" className="text-sm font-medium text-[#0A0A0A] dark:text-[#F9FAFB]">
+                    Poster title <span className="text-[#9CA3AF] dark:text-[#6B7280] font-normal">(optional)</span>
+                  </Label>
+                  <Input
+                    id="custom-title"
+                    value={customTitle}
+                    onChange={(e) => setCustomTitle(e.target.value)}
+                    placeholder="Leave blank to use city name"
+                    className="border-[#E5E7EB] dark:border-[#2A2A2A] dark:bg-[#1A1A1A] dark:text-white dark:placeholder:text-[#6B7280] rounded-lg px-4 py-3 focus:border-[#0A0A0A] dark:focus:border-[#555] focus:ring-[#0A0A0A]/10"
+                  />
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-sm font-medium text-[#0A0A0A] dark:text-[#F9FAFB]">
                     Email <span className="text-[#9CA3AF] dark:text-[#6B7280] font-normal">(optional)</span>
@@ -253,6 +279,7 @@ export default function Generator() {
               email={email}
               posterUrl={posterUrl}
               errorMessage={errorMessage}
+              jobId={jobId}
               onRetry={handleRetry}
               onReset={handleReset}
             />

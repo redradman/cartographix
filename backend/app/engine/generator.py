@@ -80,16 +80,43 @@ def generate_poster(
         logger.info("Geocoded %s to (%f, %f)", query, lat, lng)
     logger.info("Geocoding took %.2fs", time.monotonic() - t0)
 
-    # Fetch street network — use "drive" for large areas (faster), "all" for small areas (more detail)
+    # Fetch street network using a bounding box that matches the output format's aspect ratio.
+    # This ensures non-square formats (story, landscape, etc.) get actual map data filling
+    # the entire poster instead of a square map with whitespace padding.
     effective_distance = min(distance, 20000)
     network_type = "drive" if effective_distance > 5000 else "all"
-    logger.info("Fetching street network for %s (dist=%d, type=%s)", query, effective_distance, network_type)
+
+    figsize = OUTPUT_FORMATS.get(output_format, OUTPUT_FORMATS["square"])
+    fig_w, fig_h = figsize
+    aspect_ratio = fig_w / fig_h  # width / height
+
+    # Convert distance to approximate degrees (1 degree latitude ≈ 111,320 meters)
+    lat_offset = effective_distance / 111320
+    # Longitude degrees shrink with latitude (cosine correction)
+    lng_offset = effective_distance / (111320 * max(abs(np.cos(np.radians(lat))), 0.01))
+
+    # Scale offsets to match the desired aspect ratio
+    if aspect_ratio >= 1.0:
+        # Wider than tall — expand longitude, keep latitude as-is
+        lng_offset *= aspect_ratio
+    else:
+        # Taller than wide — expand latitude, keep longitude as-is
+        lat_offset /= aspect_ratio
+
+    north = lat + lat_offset
+    south = lat - lat_offset
+    east = lng + lng_offset
+    west = lng - lng_offset
+
+    logger.info(
+        "Fetching street network for %s (dist=%d, type=%s, format=%s, bbox=[%.4f,%.4f,%.4f,%.4f])",
+        query, effective_distance, network_type, output_format, north, south, east, west,
+    )
     _set_stage("fetching_streets")
     t1 = time.monotonic()
     try:
-        graph = ox.graph_from_point(
-            (lat, lng),
-            dist=effective_distance,
+        graph = ox.graph_from_bbox(
+            bbox=(west, south, east, north),
             network_type=network_type,
             simplify=True,
             truncate_by_edge=True,
@@ -108,7 +135,6 @@ def generate_poster(
         # Classify edges by road type for styling (vectorized)
         _, edges = ox.graph_to_gdfs(graph)
 
-        figsize = OUTPUT_FORMATS.get(output_format, OUTPUT_FORMATS["square"])
         fig, ax = plt.subplots(figsize=figsize, facecolor=bg_color)
         ax.set_facecolor(bg_color)
 

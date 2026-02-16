@@ -4,6 +4,7 @@ import Generator from './components/Generator';
 import HowItWorks from './components/HowItWorks';
 import Gallery from './components/Gallery';
 import Footer from './components/Footer';
+import BottomBanner from './components/BottomBanner';
 import { useDarkMode } from './hooks/useDarkMode';
 
 export default function App() {
@@ -17,6 +18,8 @@ export default function App() {
       <HowItWorks />
       <Gallery />
       <Footer />
+      <BottomBanner />
+      <div className="h-10" />
     </div>
   );
 }

@@ -62,10 +62,8 @@ function generateStreetPaths(cityName: string) {
     const y2 = y1 + Math.sin(angle) * len;
 
     if (rand() > 0.5) {
-      // Straight segment
       sideStreets.push(`M ${x1.toFixed(1)} ${y1.toFixed(1)} L ${x2.toFixed(1)} ${y2.toFixed(1)}`);
     } else {
-      // Slightly curved
       const cx = (x1 + x2) / 2 + (rand() - 0.5) * 15;
       const cy = (y1 + y2) / 2 + (rand() - 0.5) * 15;
       sideStreets.push(`M ${x1.toFixed(1)} ${y1.toFixed(1)} Q ${cx.toFixed(1)} ${cy.toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)}`);
@@ -97,71 +95,105 @@ export default function PosterMockup({ colors, cityName, className = '' }: Poste
   const [bg, primary, secondary, accent] = colors;
   const streets = generateStreetPaths(cityName);
 
+  // Determine if background is dark for text contrast
+  const isDark = isColorDark(bg);
+  const textColor = isDark ? '#FFFFFF' : '#111111';
+
   return (
-    <div className={`flex flex-col overflow-hidden ${className}`}>
-      <div className="flex-1 relative" style={{ backgroundColor: bg }}>
-        <svg
-          viewBox="0 0 100 100"
+    <div className={`relative overflow-hidden ${className}`} style={{ backgroundColor: bg }}>
+      {/* Full-bleed map */}
+      <svg
+        viewBox="0 0 100 130"
+        fill="none"
+        className="absolute inset-0 w-full h-full"
+        preserveAspectRatio="xMidYMid slice"
+      >
+        {/* Park */}
+        <ellipse
+          cx={streets.parkCx}
+          cy={streets.parkCy}
+          rx={streets.parkRx}
+          ry={streets.parkRy}
+          fill={accent}
+          opacity={0.12}
+        />
+        {/* River */}
+        <path
+          d={streets.riverPath}
+          stroke={accent}
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          opacity={0.4}
           fill="none"
-          className="absolute inset-0 w-full h-full"
-          preserveAspectRatio="xMidYMid slice"
-        >
-          {/* Side streets */}
-          {streets.sideStreets.map((d, i) => (
-            <path
-              key={`side-${i}`}
-              d={d}
-              stroke={secondary}
-              strokeWidth="0.4"
-              strokeLinecap="round"
-              opacity={0.7}
-            />
-          ))}
-          {/* Main roads */}
-          {streets.mainRoads.map((d, i) => (
-            <path
-              key={`main-${i}`}
-              d={d}
-              stroke={primary}
-              strokeWidth="0.9"
-              strokeLinecap="round"
-              opacity={0.85}
-            />
-          ))}
-          {/* River */}
+        />
+        {/* Side streets */}
+        {streets.sideStreets.map((d, i) => (
           <path
-            d={streets.riverPath}
-            stroke={accent}
-            strokeWidth="1.8"
+            key={`side-${i}`}
+            d={d}
+            stroke={secondary}
+            strokeWidth="0.35"
             strokeLinecap="round"
-            opacity={0.5}
-            fill="none"
+            opacity={0.6}
           />
-          {/* Park */}
-          <ellipse
-            cx={streets.parkCx}
-            cy={streets.parkCy}
-            rx={streets.parkRx}
-            ry={streets.parkRy}
-            fill={accent}
-            opacity={0.15}
+        ))}
+        {/* Main roads */}
+        {streets.mainRoads.map((d, i) => (
+          <path
+            key={`main-${i}`}
+            d={d}
+            stroke={primary}
+            strokeWidth="0.8"
+            strokeLinecap="round"
+            opacity={0.8}
           />
-        </svg>
-      </div>
-      <div className="px-4 py-3 flex flex-col items-center gap-0.5" style={{ backgroundColor: bg }}>
+        ))}
+      </svg>
+
+      {/* Bottom gradient fade */}
+      <div
+        className="absolute bottom-0 left-0 right-0 h-[35%]"
+        style={{
+          background: `linear-gradient(to top, ${bg} 0%, ${bg}ee 20%, ${bg}88 50%, ${bg}00 100%)`,
+        }}
+      />
+
+      {/* Top gradient fade */}
+      <div
+        className="absolute top-0 left-0 right-0 h-[20%]"
+        style={{
+          background: `linear-gradient(to bottom, ${bg} 0%, ${bg}88 40%, ${bg}00 100%)`,
+        }}
+      />
+
+      {/* Text overlay */}
+      <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center pb-[8%] gap-0.5">
         <p
-          className="text-[11px] tracking-[0.35em] uppercase font-bold font-mono"
-          style={{ color: primary }}
+          className="text-[11px] tracking-[0.35em] uppercase font-bold"
+          style={{ color: textColor, fontFamily: "'Roboto', sans-serif" }}
         >
           {cityName || 'Your City'}
         </p>
+        <div
+          className="w-[20%] h-px my-1"
+          style={{ backgroundColor: textColor, opacity: 0.5 }}
+        />
         <p
-          className="text-[7px] tracking-[0.15em] uppercase font-mono"
-          style={{ color: primary, opacity: 0.7 }}
+          className="text-[7px] tracking-[0.12em] uppercase"
+          style={{ color: textColor, opacity: 0.6, fontFamily: "'Roboto', sans-serif" }}
         >
-          48.8566° N, 2.3522° E
+          48.8566° N / 2.3522° E
         </p>
       </div>
     </div>
   );
+}
+
+function isColorDark(hex: string): boolean {
+  const c = hex.replace('#', '');
+  const r = parseInt(c.substring(0, 2), 16);
+  const g = parseInt(c.substring(2, 4), 16);
+  const b = parseInt(c.substring(4, 6), 16);
+  // Perceived brightness
+  return (r * 299 + g * 587 + b * 114) / 1000 < 128;
 }

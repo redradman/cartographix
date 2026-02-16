@@ -2,6 +2,7 @@ import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import Generator from './components/Generator';
 import HowItWorks from './components/HowItWorks';
+import Gallery from './components/Gallery';
 import Footer from './components/Footer';
 import { useDarkMode } from './hooks/useDarkMode';
 
@@ -14,6 +15,7 @@ export default function App() {
       <Hero />
       <Generator />
       <HowItWorks />
+      <Gallery />
       <Footer />
     </div>
   );

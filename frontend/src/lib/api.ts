@@ -51,6 +51,20 @@ export async function generatePoster(data: GenerateRequest): Promise<GenerateRes
   return res.json();
 }
 
+export interface GeocodeSuggestion {
+  display_name: string;
+  city: string;
+  country: string;
+  lat: number;
+  lon: number;
+}
+
+export async function fetchGeocode(query: string): Promise<GeocodeSuggestion[]> {
+  const res = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`);
+  if (!res.ok) return [];
+  return res.json();
+}
+
 export async function fetchStatus(jobId: string): Promise<StatusResponse> {
   const res = await fetch(`/api/status/${jobId}`);
   if (!res.ok) throw new Error('Failed to fetch status');

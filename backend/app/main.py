@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.routes.api import router as api_router
+from app.routes.geocode import router as geocode_router
 
 logging.basicConfig(
     level=logging.INFO,
@@ -29,6 +30,7 @@ app.add_middleware(
 
 # Mount API routes
 app.include_router(api_router)
+app.include_router(geocode_router)
 
 # Mount frontend static files (after API routes so API takes priority)
 frontend_dist = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"

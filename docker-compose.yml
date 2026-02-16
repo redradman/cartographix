@@ -1,0 +1,14 @@
+version: "3.8"
+services:
+  cartographix:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app/backend
+    environment:
+      - RESEND_API_KEY=${RESEND_API_KEY:-}
+      - ENVIRONMENT=development
+      - PORT=8000

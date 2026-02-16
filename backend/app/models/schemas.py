@@ -21,6 +21,9 @@ class StatusResponse(BaseModel):
     status: str
     city: str
     theme: str
+    poster_url: Optional[str] = None
+    stage: Optional[str] = None
+    error_message: Optional[str] = None
 
 
 class ThemeItem(BaseModel):

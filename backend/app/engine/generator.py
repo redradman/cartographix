@@ -2,7 +2,7 @@ import logging
 import os
 import uuid
 from pathlib import Path
-from typing import List
+from typing import Callable, List, Optional
 
 import matplotlib
 matplotlib.use("Agg")
@@ -22,89 +22,116 @@ def generate_poster(
     country: str,
     theme: str = "default",
     distance: int = 3000,
+    on_stage: Optional[Callable[[str], None]] = None,
 ) -> str:
     """Generate a styled city map poster and return the path to the PNG file.
 
     Uses OSMnx to fetch the street network via Nominatim geocoding,
     then renders it with matplotlib using theme colors.
     """
+    def _set_stage(stage: str) -> None:
+        if on_stage:
+            on_stage(stage)
+
+    if distance > 30000:
+        logger.warning("Large distance requested (%d m) for %s — may be slow or fail", distance, city)
+
     colors = get_theme_colors(theme)
     bg_color, primary_color, secondary_color, accent_color = colors
 
     # Geocode the location
     query = f"{city}, {country}"
     logger.info("Geocoding: %s", query)
-    point = ox.geocode(query)
+    _set_stage("geocoding")
+    try:
+        point = ox.geocode(query)
+    except Exception:
+        raise ValueError("City not found — check the spelling or try adding a country")
     lat, lng = point
 
     # Fetch street network
     logger.info("Fetching street network for %s (dist=%d)", query, distance)
-    graph = ox.graph_from_point(
-        (lat, lng),
-        dist=distance,
-        network_type="drive",
-        simplify=True,
-    )
+    _set_stage("fetching_streets")
+    try:
+        graph = ox.graph_from_point(
+            (lat, lng),
+            dist=distance,
+            network_type="drive",
+            simplify=True,
+        )
+    except MemoryError:
+        raise ValueError("Area too large — try a smaller distance")
+    except Exception:
+        raise ValueError("Could not fetch street data — try a smaller distance")
 
-    # Classify edges by road type for styling
-    _, edges = ox.graph_to_gdfs(graph)
+    # Render poster
+    _set_stage("rendering")
+    try:
+        # Classify edges by road type for styling
+        _, edges = ox.graph_to_gdfs(graph)
 
-    fig, ax = plt.subplots(figsize=(12, 12), facecolor=bg_color)
-    ax.set_facecolor(bg_color)
+        fig, ax = plt.subplots(figsize=(12, 12), facecolor=bg_color)
+        ax.set_facecolor(bg_color)
 
-    # Determine line widths and colors based on highway type
-    edge_colors = []
-    edge_widths = []
-    for _, row in edges.iterrows():
-        highway = row.get("highway", "")
-        if isinstance(highway, list):
-            highway = highway[0] if highway else ""
+        # Determine line widths and colors based on highway type
+        edge_colors = []
+        edge_widths = []
+        for _, row in edges.iterrows():
+            highway = row.get("highway", "")
+            if isinstance(highway, list):
+                highway = highway[0] if highway else ""
 
-        if highway in ("motorway", "trunk", "primary"):
-            edge_colors.append(accent_color)
-            edge_widths.append(2.5)
-        elif highway in ("secondary", "tertiary"):
-            edge_colors.append(primary_color)
-            edge_widths.append(1.5)
-        else:
-            edge_colors.append(secondary_color)
-            edge_widths.append(0.8)
+            if highway in ("motorway", "trunk", "primary"):
+                edge_colors.append(accent_color)
+                edge_widths.append(2.5)
+            elif highway in ("secondary", "tertiary"):
+                edge_colors.append(primary_color)
+                edge_widths.append(1.5)
+            else:
+                edge_colors.append(secondary_color)
+                edge_widths.append(0.8)
 
-    ox.plot_graph(
-        graph,
-        ax=ax,
-        node_size=0,
-        edge_color=edge_colors,
-        edge_linewidth=edge_widths,
-        bgcolor=bg_color,
-        show=False,
-        close=False,
-    )
+        ox.plot_graph(
+            graph,
+            ax=ax,
+            node_size=0,
+            edge_color=edge_colors,
+            edge_linewidth=edge_widths,
+            bgcolor=bg_color,
+            show=False,
+            close=False,
+        )
 
-    # Add city name label
-    ax.set_title(
-        city.upper(),
-        fontsize=28,
-        fontweight="bold",
-        color=primary_color,
-        pad=20,
-        fontfamily="sans-serif",
-    )
+        # Add city name label
+        ax.set_title(
+            city.upper(),
+            fontsize=28,
+            fontweight="bold",
+            color=primary_color,
+            pad=20,
+            fontfamily="sans-serif",
+        )
 
-    ax.margins(0.02)
-    ax.axis("off")
+        ax.margins(0.02)
+        ax.axis("off")
 
-    # Save to file
-    filename = f"{city.lower().replace(' ', '_')}_{theme}_{uuid.uuid4().hex[:8]}.png"
-    output_path = OUTPUT_DIR / filename
-    fig.savefig(
-        str(output_path),
-        dpi=200,
-        bbox_inches="tight",
-        facecolor=bg_color,
-        pad_inches=0.5,
-    )
-    plt.close(fig)
+        # Save to file
+        filename = f"{city.lower().replace(' ', '_')}_{theme}_{uuid.uuid4().hex[:8]}.png"
+        output_path = OUTPUT_DIR / filename
+        fig.savefig(
+            str(output_path),
+            dpi=200,
+            bbox_inches="tight",
+            facecolor=bg_color,
+            pad_inches=0.5,
+        )
+        plt.close(fig)
+    except ValueError:
+        raise
+    except MemoryError:
+        raise ValueError("Area too large — try a smaller distance")
+    except Exception:
+        raise ValueError("Poster rendering failed — please try again")
 
     logger.info("Poster saved to %s", output_path)
     return str(output_path)

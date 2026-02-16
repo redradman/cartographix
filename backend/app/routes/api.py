@@ -1,7 +1,9 @@
 import logging
+from pathlib import Path
 from typing import List
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException
+from fastapi.responses import FileResponse
 
 from app.engine.generator import generate_poster
 from app.models.schemas import (
@@ -29,6 +31,9 @@ def _process_job(job_id: str) -> None:
     if not job:
         return
 
+    def _update_stage(stage: str) -> None:
+        job.stage = stage
+
     job.status = "processing"
     try:
         result_path = generate_poster(
@@ -36,13 +41,17 @@ def _process_job(job_id: str) -> None:
             country=job.country,
             theme=job.theme,
             distance=job.distance,
+            on_stage=_update_stage,
         )
         job.result_path = result_path
-        job.status = "completed"
-        logger.info("Job %s completed: %s", job_id, result_path)
 
         if job.email:
+            _update_stage("sending_email")
             send_poster_email(job.email, job.city, result_path)
+
+        _update_stage("done")
+        job.status = "completed"
+        logger.info("Job %s completed: %s", job_id, result_path)
 
     except Exception as e:
         job.status = "failed"
@@ -101,11 +110,33 @@ async def get_status(job_id: str) -> StatusResponse:
             status_code=404,
             detail={"error": "not_found", "detail": f"Job {job_id} not found"},
         )
+    poster_url = f"/api/poster/{job.job_id}" if job.status == "completed" and job.result_path else None
     return StatusResponse(
         job_id=job.job_id,
         status=job.status,
         city=job.city,
         theme=job.theme,
+        poster_url=poster_url,
+        stage=job.stage,
+        error_message=job.error,
+    )
+
+
+@router.get("/poster/{job_id}")
+async def get_poster(job_id: str) -> FileResponse:
+    """Serve the generated poster PNG for a completed job."""
+    job = job_store.get(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    if job.status != "completed" or not job.result_path:
+        raise HTTPException(status_code=404, detail="Poster not ready")
+    file_path = Path(job.result_path)
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="Poster file not found")
+    return FileResponse(
+        path=str(file_path),
+        media_type="image/png",
+        filename=f"{job.city.lower().replace(' ', '_')}_{job.theme}_poster.png",
     )
 
 

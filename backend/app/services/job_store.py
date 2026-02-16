@@ -11,6 +11,7 @@ class Job:
         self.distance: int = distance
         self.email: Optional[str] = email
         self.status: str = "queued"
+        self.stage: Optional[str] = None
         self.result_path: Optional[str] = None
         self.error: Optional[str] = None
 

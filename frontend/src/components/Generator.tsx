@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import ThemeSelector from './ThemeSelector';
+import ThemeSkeleton from './ThemeSkeleton';
 import DistanceSlider from './DistanceSlider';
 import StatusDisplay from './StatusDisplay';
 import Toast from './Toast';
@@ -45,12 +46,14 @@ export default function Generator() {
   const [stage, setStage] = useState<string | undefined>(undefined);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
+  const [themesLoading, setThemesLoading] = useState(true);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     fetchThemes()
       .then(setThemes)
-      .catch(() => { /* use fallback themes */ });
+      .catch(() => { /* use fallback themes */ })
+      .finally(() => setThemesLoading(false));
   }, []);
 
   useEffect(() => {
@@ -164,7 +167,11 @@ export default function Generator() {
 
                 <div className="space-y-3">
                   <Label className="text-sm font-medium text-[#0A0A0A]">Theme</Label>
-                  <ThemeSelector themes={themes} selected={theme} onSelect={setTheme} />
+                  {themesLoading ? (
+                    <ThemeSkeleton />
+                  ) : (
+                    <ThemeSelector themes={themes} selected={theme} onSelect={setTheme} />
+                  )}
                 </div>
 
                 <DistanceSlider value={distance} onChange={setDistance} />

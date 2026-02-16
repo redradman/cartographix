@@ -1,0 +1,27 @@
+# Git
+.git
+.gitignore
+
+# Node
+frontend/node_modules
+frontend/.vite
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+.venv
+backend/__pycache__
+backend/**/__pycache__
+
+# IDE
+.vscode
+.idea
+*.swp
+
+# Docs / meta
+docs
+README.md
+CLAUDE.md
+claude.md
+*.md

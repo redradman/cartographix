@@ -1,13 +1,20 @@
 from typing import List, Optional
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
 class GenerateRequest(BaseModel):
     city: str = Field(..., min_length=1, max_length=100)
-    country: str = Field(..., min_length=1, max_length=100)
+    country: str = Field(default="", max_length=100)
     theme: str = Field(default="default")
     distance: int = Field(default=10000, ge=1000, le=50000)
     email: Optional[EmailStr] = None
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def empty_string_to_none(cls, v: object) -> object:
+        if v == "":
+            return None
+        return v
 
 
 class GenerateResponse(BaseModel):

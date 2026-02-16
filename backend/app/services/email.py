@@ -20,6 +20,7 @@ def send_poster_email(to_email: str, city: str, png_path: str) -> bool:
 
         file_path = Path(png_path)
         file_content = file_path.read_bytes()
+        encoded_content = base64.b64encode(file_content).decode("utf-8")
 
         resend.Emails.send(
             {
@@ -27,14 +28,15 @@ def send_poster_email(to_email: str, city: str, png_path: str) -> bool:
                 "to": [to_email],
                 "subject": f"Your Cartographix poster of {city} is ready",
                 "html": (
-                    f"<h2>Your {city} poster is ready!</h2>"
-                    f"<p>Your custom city map poster is attached as a PNG file.</p>"
-                    f"<p>Thank you for using Cartographix!</p>"
+                    "<h2>Your poster is ready!</h2>"
+                    f"<p>Your custom map poster of <strong>{city}</strong> is attached as a high-resolution PNG.</p>"
+                    "<p>Thank you for using <a href='https://github.com/radman-x/cartographix'>Cartographix</a>!</p>"
+                    "<p style='color: #9CA3AF; font-size: 12px;'>Cartographix is open source.</p>"
                 ),
                 "attachments": [
                     {
                         "filename": f"{city.lower().replace(' ', '_')}_poster.png",
-                        "content": list(file_content),
+                        "content": encoded_content,
                     }
                 ],
             }

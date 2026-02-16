@@ -14,20 +14,22 @@ export interface GenerateRequest {
 
 export interface GenerateResponse {
   job_id: string;
-  message: string;
+  status: string;
+  estimated_seconds: number;
 }
 
 export interface StatusResponse {
   job_id: string;
   status: 'queued' | 'processing' | 'completed' | 'failed';
-  message?: string;
-  estimated_time?: number;
+  city: string;
+  theme: string;
 }
 
 export async function fetchThemes(): Promise<Theme[]> {
   const res = await fetch('/api/themes');
   if (!res.ok) throw new Error('Failed to fetch themes');
-  return res.json();
+  const data = await res.json();
+  return data.themes;
 }
 
 export async function generatePoster(data: GenerateRequest): Promise<GenerateResponse> {

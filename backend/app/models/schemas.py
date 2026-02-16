@@ -6,7 +6,7 @@ class GenerateRequest(BaseModel):
     city: str = Field(..., min_length=1, max_length=100)
     country: str = Field(..., min_length=1, max_length=100)
     theme: str = Field(default="default")
-    distance: int = Field(default=3000, ge=500, le=20000)
+    distance: int = Field(default=10000, ge=1000, le=50000)
     email: Optional[EmailStr] = None
 
 

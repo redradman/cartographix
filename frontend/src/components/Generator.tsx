@@ -11,30 +11,30 @@ import { fetchThemes, generatePoster, fetchStatus } from '@/lib/api';
 type AppState = 'default' | 'generating' | 'completed' | 'error' | 'rate_limited';
 
 const FALLBACK_THEMES: Theme[] = [
-  { id: 'classic', name: 'Classic', preview_colors: ['#FFFFFF', '#E5E7EB', '#6B7280', '#0A0A0A'] },
-  { id: 'midnight', name: 'Midnight', preview_colors: ['#0F172A', '#1E293B', '#334155', '#475569'] },
-  { id: 'ocean', name: 'Ocean', preview_colors: ['#0C4A6E', '#0369A1', '#38BDF8', '#E0F2FE'] },
-  { id: 'sunset', name: 'Sunset', preview_colors: ['#7C2D12', '#EA580C', '#FB923C', '#FED7AA'] },
-  { id: 'forest', name: 'Forest', preview_colors: ['#14532D', '#166534', '#22C55E', '#DCFCE7'] },
-  { id: 'rose', name: 'Rose', preview_colors: ['#881337', '#E11D48', '#FB7185', '#FFE4E6'] },
-  { id: 'arctic', name: 'Arctic', preview_colors: ['#F8FAFC', '#CBD5E1', '#64748B', '#1E293B'] },
-  { id: 'desert', name: 'Desert', preview_colors: ['#78350F', '#D97706', '#FCD34D', '#FFFBEB'] },
-  { id: 'lavender', name: 'Lavender', preview_colors: ['#581C87', '#7C3AED', '#A78BFA', '#EDE9FE'] },
-  { id: 'neon', name: 'Neon', preview_colors: ['#020617', '#4ADE80', '#22D3EE', '#F472B6'] },
-  { id: 'vintage', name: 'Vintage', preview_colors: ['#44403C', '#78716C', '#D6D3D1', '#FAFAF9'] },
-  { id: 'monochrome', name: 'Monochrome', preview_colors: ['#000000', '#404040', '#808080', '#FFFFFF'] },
-  { id: 'coral', name: 'Coral', preview_colors: ['#7F1D1D', '#EF4444', '#FCA5A5', '#FEF2F2'] },
-  { id: 'emerald', name: 'Emerald', preview_colors: ['#064E3B', '#059669', '#6EE7B7', '#ECFDF5'] },
-  { id: 'twilight', name: 'Twilight', preview_colors: ['#1E1B4B', '#4338CA', '#818CF8', '#EEF2FF'] },
-  { id: 'autumn', name: 'Autumn', preview_colors: ['#431407', '#C2410C', '#FB923C', '#FFF7ED'] },
-  { id: 'blueprint', name: 'Blueprint', preview_colors: ['#1E3A5F', '#2563EB', '#60A5FA', '#DBEAFE'] },
+  { id: 'default', name: 'Default', preview_colors: ['#FFFFFF', '#333333', '#999999', '#FF6B6B'] },
+  { id: 'classic', name: 'Classic', preview_colors: ['#F5F5DC', '#2F2F2F', '#8B8B83', '#CD853F'] },
+  { id: 'midnight', name: 'Midnight', preview_colors: ['#0D1117', '#1A1A2E', '#16213E', '#0F3460'] },
+  { id: 'ocean', name: 'Ocean', preview_colors: ['#001529', '#003566', '#006D77', '#83C5BE'] },
+  { id: 'forest', name: 'Forest', preview_colors: ['#1A1C16', '#2D3A25', '#4A6741', '#8FBC8F'] },
+  { id: 'sunset', name: 'Sunset', preview_colors: ['#1A0A2E', '#FF6B35', '#FF9F1C', '#FCE762'] },
+  { id: 'neon', name: 'Neon', preview_colors: ['#0A0A0A', '#FF00FF', '#00FFFF', '#39FF14'] },
+  { id: 'pastel', name: 'Pastel', preview_colors: ['#FFF0F5', '#FFB6C1', '#DDA0DD', '#B0E0E6'] },
+  { id: 'monochrome', name: 'Monochrome', preview_colors: ['#FFFFFF', '#000000', '#404040', '#808080'] },
+  { id: 'vintage', name: 'Vintage', preview_colors: ['#F4E4C1', '#5C4033', '#8B6914', '#CD9B1D'] },
+  { id: 'arctic', name: 'Arctic', preview_colors: ['#F0F8FF', '#B0C4DE', '#87CEEB', '#4682B4'] },
+  { id: 'desert', name: 'Desert', preview_colors: ['#F5DEB3', '#D2691E', '#DEB887', '#CD853F'] },
+  { id: 'cyberpunk', name: 'Cyberpunk', preview_colors: ['#0D0221', '#FF2A6D', '#05D9E8', '#D1F7FF'] },
+  { id: 'watercolor', name: 'Watercolor', preview_colors: ['#FAF0E6', '#6B8E8E', '#9DB5B2', '#C4D7D1'] },
+  { id: 'blueprint', name: 'Blueprint', preview_colors: ['#003082', '#4A90D9', '#7EC8E3', '#FFFFFF'] },
+  { id: 'autumn', name: 'Autumn', preview_colors: ['#2D1B00', '#D2691E', '#FF8C00', '#FFD700'] },
+  { id: 'minimal', name: 'Minimal', preview_colors: ['#FAFAFA', '#E0E0E0', '#BDBDBD', '#9E9E9E'] },
 ];
 
 export default function Generator() {
   const [themes, setThemes] = useState<Theme[]>(FALLBACK_THEMES);
   const [city, setCity] = useState('');
   const [country, setCountry] = useState('');
-  const [theme, setTheme] = useState('classic');
+  const [theme, setTheme] = useState('default');
   const [distance, setDistance] = useState(10000);
   const [email, setEmail] = useState('');
   const [appState, setAppState] = useState<AppState>('default');
@@ -65,7 +65,7 @@ export default function Generator() {
           setAppState('completed');
         } else if (status.status === 'failed') {
           if (pollingRef.current) clearInterval(pollingRef.current);
-          setErrorMessage(status.message || 'Generation failed');
+          setErrorMessage('Generation failed. Try again with a different city or smaller distance.');
           setAppState('error');
         }
       } catch {

@@ -11,7 +11,7 @@ class Job:
         theme: str,
         distance: int,
         email: Optional[str],
-        output_format: str = "square",
+        output_format: str = "instagram",
         custom_title: str = "",
     ) -> None:
         self.job_id: str = uuid.uuid4().hex
@@ -45,7 +45,7 @@ class JobStore:
         theme: str,
         distance: int,
         email: Optional[str],
-        output_format: str = "square",
+        output_format: str = "instagram",
         custom_title: str = "",
     ) -> Job:
         job = Job(

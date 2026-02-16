@@ -8,7 +8,7 @@ class GenerateRequest(BaseModel):
     theme: str = Field(default="default")
     distance: int = Field(default=10000, ge=1000, le=50000)
     email: Optional[EmailStr] = None
-    output_format: str = Field(default="square")
+    output_format: str = Field(default="instagram")
     custom_title: str = Field(default="", max_length=100)
 
     @field_validator("email", mode="before")

@@ -42,7 +42,7 @@ export default function Generator() {
   const [theme, setTheme] = useState('default');
   const [distance, setDistance] = useState(10000);
   const [email, setEmail] = useState('');
-  const [outputFormat, setOutputFormat] = useState('square');
+  const [outputFormat, setOutputFormat] = useState('instagram');
   const [customTitle, setCustomTitle] = useState('');
   const [jobId, setJobId] = useState<string | null>(null);
   const [appState, setAppState] = useState<AppState>('default');
@@ -115,7 +115,7 @@ export default function Generator() {
     setCity('');
     setCountry('');
     setEmail('');
-    setOutputFormat('square');
+    setOutputFormat('instagram');
     setCustomTitle('');
     setJobId(null);
     setErrorMessage('');

@@ -5,14 +5,15 @@ interface FormatOption {
   name: string;
   width: number;
   height: number;
+  pixels: string;
 }
 
 const FORMATS: FormatOption[] = [
-  { id: 'square', name: 'Square', width: 1, height: 1 },
-  { id: 'landscape', name: 'Landscape', width: 16, height: 9 },
-  { id: 'portrait', name: 'Portrait', width: 2, height: 3 },
-  { id: 'phone', name: 'Phone', width: 6, height: 13 },
-  { id: 'story', name: 'Story', width: 9, height: 16 },
+  { id: 'instagram', name: 'Instagram Post', width: 1, height: 1, pixels: '1080×1080' },
+  { id: 'mobile_wallpaper', name: 'Mobile Wallpaper', width: 9, height: 16, pixels: '1080×1920' },
+  { id: 'hd_wallpaper', name: 'HD Wallpaper', width: 16, height: 9, pixels: '1920×1080' },
+  { id: '4k_wallpaper', name: '4K Wallpaper', width: 16, height: 9, pixels: '3840×2160' },
+  { id: 'a4_print', name: 'A4 Print', width: 8.3, height: 11.7, pixels: '2480×3508' },
 ];
 
 interface FormatSelectorProps {
@@ -56,15 +57,26 @@ export default function FormatSelector({ selected, onSelect }: FormatSelectorPro
                 style={{ width: `${w}px`, height: `${h}px` }}
               />
             </div>
-            <span
-              className={`text-xs transition-colors ${
-                isSelected
-                  ? 'text-[#0A0A0A] dark:text-white font-medium'
-                  : 'text-[#6B7280] dark:text-[#9CA3AF]'
-              }`}
-            >
-              {fmt.name}
-            </span>
+            <div className="flex flex-col items-center">
+              <span
+                className={`text-xs transition-colors ${
+                  isSelected
+                    ? 'text-[#0A0A0A] dark:text-white font-medium'
+                    : 'text-[#6B7280] dark:text-[#9CA3AF]'
+                }`}
+              >
+                {fmt.name}
+              </span>
+              <span
+                className={`text-[10px] transition-colors ${
+                  isSelected
+                    ? 'text-[#6B7280] dark:text-[#9CA3AF]'
+                    : 'text-[#9CA3AF] dark:text-[#6B7280]'
+                }`}
+              >
+                {fmt.pixels}
+              </span>
+            </div>
           </motion.button>
         );
       })}

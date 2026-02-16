@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api")
 
 
-ALLOWED_OUTPUT_FORMATS = ["square", "landscape", "portrait", "phone", "story"]
+ALLOWED_OUTPUT_FORMATS = ["instagram", "mobile_wallpaper", "hd_wallpaper", "4k_wallpaper", "a4_print"]
 
 
 def _process_job(job_id: str) -> None:

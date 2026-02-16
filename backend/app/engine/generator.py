@@ -19,12 +19,12 @@ logger = logging.getLogger(__name__)
 OUTPUT_DIR = Path(__file__).resolve().parent.parent.parent / "output"
 OUTPUT_DIR.mkdir(exist_ok=True)
 
-OUTPUT_FORMATS = {
-    "square": (12, 12),
-    "landscape": (16, 9),
-    "portrait": (8, 12),
-    "phone": (6, 13),
-    "story": (9, 16),
+RESOLUTION_PRESETS = {
+    "instagram": {"name": "Instagram Post", "figsize": (3.6, 3.6), "dpi": 300, "pixels": "1080×1080"},
+    "mobile_wallpaper": {"name": "Mobile Wallpaper", "figsize": (3.6, 6.4), "dpi": 300, "pixels": "1080×1920"},
+    "hd_wallpaper": {"name": "HD Wallpaper", "figsize": (6.4, 3.6), "dpi": 300, "pixels": "1920×1080"},
+    "4k_wallpaper": {"name": "4K Wallpaper", "figsize": (12.8, 7.2), "dpi": 300, "pixels": "3840×2160"},
+    "a4_print": {"name": "A4 Print", "figsize": (8.3, 11.7), "dpi": 300, "pixels": "2480×3508"},
 }
 
 # Configure OSMnx settings for reliability
@@ -41,7 +41,7 @@ def generate_poster(
     country: str,
     theme: str = "default",
     distance: int = 3000,
-    output_format: str = "square",
+    output_format: str = "instagram",
     custom_title: str = "",
     on_stage: Optional[Callable[[str], None]] = None,
 ) -> str:
@@ -86,7 +86,8 @@ def generate_poster(
     effective_distance = min(distance, 20000)
     network_type = "drive" if effective_distance > 5000 else "all"
 
-    figsize = OUTPUT_FORMATS.get(output_format, OUTPUT_FORMATS["square"])
+    preset = RESOLUTION_PRESETS.get(output_format, RESOLUTION_PRESETS["instagram"])
+    figsize = preset["figsize"]
     fig_w, fig_h = figsize
     aspect_ratio = fig_w / fig_h  # width / height
 
@@ -161,17 +162,6 @@ def generate_poster(
             close=False,
         )
 
-        # Add city name label
-        title_text = custom_title if custom_title else city.upper()
-        ax.set_title(
-            title_text,
-            fontsize=28,
-            fontweight="bold",
-            color=primary_color,
-            pad=10,
-            fontfamily="sans-serif",
-        )
-
         ax.margins(0)
         ax.axis("off")
 
@@ -199,15 +189,58 @@ def generate_poster(
         # without matplotlib letterboxing it (which causes excess whitespace).
         ax.set_aspect("auto")
 
-        # Make axes fill the figure, leaving minimal space for the title
-        fig.subplots_adjust(left=0, right=1, bottom=0, top=0.95)
+        fig.subplots_adjust(left=0, right=1, bottom=0.18, top=1)
+
+        # Text rendering — MapToPoster style (bottom of poster)
+        scale_factor = min(fig_w, fig_h) / 12.0
+        base_main = 60
+        base_sub = 22
+        base_coords = 14
+        base_attr = 8
+
+        title_text = custom_title if custom_title else city.upper()
+        # Letter-space Latin text
+        if all(ord(c) < 256 for c in title_text):
+            spaced_title = "  ".join(title_text)
+        else:
+            spaced_title = title_text
+
+        # Dynamic size adjustment for long names
+        char_count = len(title_text)
+        adjusted_main = base_main * scale_factor
+        if char_count > 10:
+            length_factor = 10 / char_count
+            adjusted_main = max(adjusted_main * length_factor, 10 * scale_factor)
+
+        ax.text(0.5, 0.14, spaced_title, transform=ax.transAxes,
+                color=primary_color, ha="center", va="center",
+                fontsize=adjusted_main, fontweight="bold", fontfamily="monospace", zorder=11)
+
+        country_text = country.upper() if country else ""
+        if country_text:
+            ax.text(0.5, 0.10, country_text, transform=ax.transAxes,
+                    color=primary_color, ha="center", va="center",
+                    fontsize=base_sub * scale_factor, fontfamily="monospace", zorder=11)
+
+        # Coordinates
+        lat_dir = "N" if lat >= 0 else "S"
+        lng_dir = "E" if lng >= 0 else "W"
+        coords_text = f"{abs(lat):.4f}° {lat_dir}, {abs(lng):.4f}° {lng_dir}"
+        ax.text(0.5, 0.07, coords_text, transform=ax.transAxes,
+                color=primary_color, alpha=0.7, ha="center", va="center",
+                fontsize=base_coords * scale_factor, fontfamily="monospace", zorder=11)
+
+        # Attribution
+        ax.text(0.98, 0.02, "© OpenStreetMap contributors", transform=ax.transAxes,
+                color=primary_color, alpha=0.5, ha="right", va="bottom",
+                fontsize=base_attr * scale_factor, fontfamily="monospace", zorder=11)
 
         # Save to file
         filename = f"{city.lower().replace(' ', '_')}_{theme}_{uuid.uuid4().hex[:8]}.png"
         output_path = OUTPUT_DIR / filename
         fig.savefig(
             str(output_path),
-            dpi=250 if output_format in ("portrait", "phone", "story") else 200,
+            dpi=preset["dpi"],
             facecolor=bg_color,
         )
         plt.close(fig)

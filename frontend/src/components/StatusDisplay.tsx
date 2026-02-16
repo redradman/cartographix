@@ -18,7 +18,7 @@ function Spinner() {
     <motion.div
       animate={{ rotate: 360 }}
       transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-      className="w-8 h-8 border-2 border-[#E5E7EB] border-t-[#0A0A0A] rounded-full"
+      className="w-8 h-8 border-2 border-[#E5E7EB] dark:border-[#2A2A2A] border-t-[#0A0A0A] dark:border-t-white rounded-full"
     />
   );
 }
@@ -29,13 +29,13 @@ function Checkmark() {
       initial={{ scale: 0 }}
       animate={{ scale: 1 }}
       transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-      className="w-16 h-16 bg-[#0A0A0A] rounded-full flex items-center justify-center"
+      className="w-16 h-16 bg-[#0A0A0A] dark:bg-white rounded-full flex items-center justify-center"
     >
       <motion.svg
         initial={{ pathLength: 0 }}
         animate={{ pathLength: 1 }}
         transition={{ duration: 0.4, delay: 0.2 }}
-        className="w-8 h-8 text-white"
+        className="w-8 h-8 text-white dark:text-[#0A0A0A]"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -85,10 +85,10 @@ export default function StatusDisplay({ state, city, stage, email, posterUrl, er
           className="flex flex-col items-center justify-center py-16 gap-6"
         >
           <Spinner />
-          <p className="text-[#6B7280] text-center">
+          <p className="text-[#6B7280] dark:text-[#9CA3AF] text-center">
             {getStageMessage(stage, city)}
           </p>
-          <p className="text-sm text-[#9CA3AF]">This usually takes about a minute</p>
+          <p className="text-sm text-[#9CA3AF] dark:text-[#6B7280]">This usually takes about a minute</p>
         </motion.div>
       )}
 
@@ -102,10 +102,10 @@ export default function StatusDisplay({ state, city, stage, email, posterUrl, er
         >
           <Checkmark />
           <div className="text-center">
-            <p className="text-lg font-semibold text-[#0A0A0A]">
+            <p className="text-lg font-semibold text-[#0A0A0A] dark:text-[#F9FAFB]">
               Your poster of {city} is ready!
             </p>
-            {email && <p className="text-[#6B7280] mt-2">We've also sent it to your email.</p>}
+            {email && <p className="text-[#6B7280] dark:text-[#9CA3AF] mt-2">We've also sent it to your email.</p>}
           </div>
 
           {posterUrl && (
@@ -115,7 +115,7 @@ export default function StatusDisplay({ state, city, stage, email, posterUrl, er
               transition={{ delay: 0.3, duration: 0.5 }}
               className="mt-4 w-full max-w-md"
             >
-              <div className="rounded-lg overflow-hidden shadow-xl border border-[#E5E7EB]">
+              <div className="rounded-lg overflow-hidden shadow-xl border border-[#E5E7EB] dark:border-[#2A2A2A]">
                 <img
                   src={posterUrl}
                   alt={`Map poster of ${city}`}
@@ -124,7 +124,7 @@ export default function StatusDisplay({ state, city, stage, email, posterUrl, er
               </div>
               <button
                 onClick={handleDownload}
-                className="mt-4 w-full py-3 border-2 border-[#0A0A0A] text-[#0A0A0A] rounded-lg font-medium hover:bg-[#0A0A0A] hover:text-white transition-all hover:-translate-y-0.5 active:scale-[0.98]"
+                className="mt-4 w-full py-3 border-2 border-[#0A0A0A] dark:border-white text-[#0A0A0A] dark:text-white rounded-lg font-medium hover:bg-[#0A0A0A] dark:hover:bg-white hover:text-white dark:hover:text-[#0A0A0A] transition-all hover:-translate-y-0.5 active:scale-[0.98]"
               >
                 Download poster
               </button>
@@ -133,7 +133,7 @@ export default function StatusDisplay({ state, city, stage, email, posterUrl, er
 
           <button
             onClick={onReset}
-            className="mt-2 px-6 py-3 bg-[#0A0A0A] text-white rounded-lg font-medium hover:bg-[#1a1a1a] transition-all hover:-translate-y-0.5 active:scale-[0.98]"
+            className="mt-2 px-6 py-3 bg-[#0A0A0A] dark:bg-white text-white dark:text-[#0A0A0A] rounded-lg font-medium hover:bg-[#1a1a1a] dark:hover:bg-[#E5E7EB] transition-all hover:-translate-y-0.5 active:scale-[0.98]"
           >
             Create another
           </button>
@@ -148,15 +148,15 @@ export default function StatusDisplay({ state, city, stage, email, posterUrl, er
           exit={{ opacity: 0 }}
           className="flex flex-col items-center justify-center py-16 gap-4"
         >
-          <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-full bg-red-50 dark:bg-red-950 flex items-center justify-center">
             <svg className="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </div>
-          <p className="text-red-600 text-center">{errorMessage || 'Something went wrong'}</p>
+          <p className="text-red-600 dark:text-red-400 text-center">{errorMessage || 'Something went wrong'}</p>
           <button
             onClick={onRetry}
-            className="mt-2 px-6 py-3 bg-[#0A0A0A] text-white rounded-lg font-medium hover:bg-[#1a1a1a] transition-all hover:-translate-y-0.5 active:scale-[0.98]"
+            className="mt-2 px-6 py-3 bg-[#0A0A0A] dark:bg-white text-white dark:text-[#0A0A0A] rounded-lg font-medium hover:bg-[#1a1a1a] dark:hover:bg-[#E5E7EB] transition-all hover:-translate-y-0.5 active:scale-[0.98]"
           >
             Try again
           </button>
@@ -171,12 +171,12 @@ export default function StatusDisplay({ state, city, stage, email, posterUrl, er
           exit={{ opacity: 0 }}
           className="flex flex-col items-center justify-center py-16 gap-4"
         >
-          <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-full bg-amber-50 dark:bg-amber-950 flex items-center justify-center">
             <svg className="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <p className="text-[#6B7280] text-center">
+          <p className="text-[#6B7280] dark:text-[#9CA3AF] text-center">
             You've created 3 posters today — come back tomorrow!
           </p>
         </motion.div>

@@ -95,19 +95,19 @@ export default function CityAutocomplete({
         className={className}
       />
       {isOpen && suggestions.length > 0 && (
-        <ul className="absolute z-50 left-0 right-0 mt-1 bg-white border border-[#E5E7EB] rounded-lg shadow-lg overflow-hidden">
+        <ul className="absolute z-50 left-0 right-0 mt-1 bg-white dark:bg-[#1A1A1A] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-lg shadow-lg overflow-hidden">
           {suggestions.map((s, i) => (
             <li
               key={`${s.lat}-${s.lon}`}
               onMouseDown={() => handleSelect(s)}
               onMouseEnter={() => setActiveIndex(i)}
               className={`px-4 py-2.5 cursor-pointer text-sm transition-colors ${
-                i === activeIndex ? 'bg-[#F3F4F6]' : 'bg-white'
+                i === activeIndex ? 'bg-[#F3F4F6] dark:bg-[#2A2A2A]' : 'bg-white dark:bg-[#1A1A1A]'
               }`}
             >
-              <span className="font-medium text-[#0A0A0A]">{s.city}</span>
+              <span className="font-medium text-[#0A0A0A] dark:text-[#F9FAFB]">{s.city}</span>
               {s.country && (
-                <span className="text-[#6B7280] ml-1.5">{s.country}</span>
+                <span className="text-[#6B7280] dark:text-[#9CA3AF] ml-1.5">{s.country}</span>
               )}
             </li>
           ))}

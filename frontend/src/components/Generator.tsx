@@ -127,7 +127,7 @@ export default function Generator() {
   return (
     <section id="generator" className="py-24 px-6">
       <div className="max-w-6xl mx-auto">
-        <h2 className="text-3xl md:text-4xl font-bold text-[#0A0A0A] text-center mb-16">
+        <h2 className="text-3xl md:text-4xl font-bold text-[#0A0A0A] dark:text-[#F9FAFB] text-center mb-16">
           Create your poster
         </h2>
 
@@ -143,7 +143,7 @@ export default function Generator() {
               {/* Form */}
               <div className="space-y-8">
                 <div className="space-y-2">
-                  <Label htmlFor="city" className="text-sm font-medium text-[#0A0A0A]">
+                  <Label htmlFor="city" className="text-sm font-medium text-[#0A0A0A] dark:text-[#F9FAFB]">
                     City
                   </Label>
                   <CityAutocomplete
@@ -154,24 +154,24 @@ export default function Generator() {
                       setCity(c);
                       setCountry(co);
                     }}
-                    className="border-[#E5E7EB] rounded-lg px-4 py-3 focus:border-[#0A0A0A] focus:ring-[#0A0A0A]/10"
+                    className="border-[#E5E7EB] dark:border-[#2A2A2A] dark:bg-[#1A1A1A] dark:text-white rounded-lg px-4 py-3 focus:border-[#0A0A0A] dark:focus:border-[#555] focus:ring-[#0A0A0A]/10"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="country" className="text-sm font-medium text-[#0A0A0A]">
-                    Country <span className="text-[#9CA3AF] font-normal">(optional)</span>
+                  <Label htmlFor="country" className="text-sm font-medium text-[#0A0A0A] dark:text-[#F9FAFB]">
+                    Country <span className="text-[#9CA3AF] dark:text-[#6B7280] font-normal">(optional)</span>
                   </Label>
                   <Input
                     id="country"
                     value={country}
                     onChange={(e) => setCountry(e.target.value)}
-                    className="border-[#E5E7EB] rounded-lg px-4 py-3 focus:border-[#0A0A0A] focus:ring-[#0A0A0A]/10"
+                    className="border-[#E5E7EB] dark:border-[#2A2A2A] dark:bg-[#1A1A1A] dark:text-white rounded-lg px-4 py-3 focus:border-[#0A0A0A] dark:focus:border-[#555] focus:ring-[#0A0A0A]/10"
                   />
                 </div>
 
                 <div className="space-y-3">
-                  <Label className="text-sm font-medium text-[#0A0A0A]">Theme</Label>
+                  <Label className="text-sm font-medium text-[#0A0A0A] dark:text-[#F9FAFB]">Theme</Label>
                   {themesLoading ? (
                     <ThemeSkeleton />
                   ) : (
@@ -182,8 +182,8 @@ export default function Generator() {
                 <DistanceSlider value={distance} onChange={setDistance} />
 
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-medium text-[#0A0A0A]">
-                    Email <span className="text-[#9CA3AF] font-normal">(optional)</span>
+                  <Label htmlFor="email" className="text-sm font-medium text-[#0A0A0A] dark:text-[#F9FAFB]">
+                    Email <span className="text-[#9CA3AF] dark:text-[#6B7280] font-normal">(optional)</span>
                   </Label>
                   <Input
                     id="email"
@@ -191,7 +191,7 @@ export default function Generator() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Optional — we'll email you a copy too"
-                    className="border-[#E5E7EB] rounded-lg px-4 py-3 focus:border-[#0A0A0A] focus:ring-[#0A0A0A]/10"
+                    className="border-[#E5E7EB] dark:border-[#2A2A2A] dark:bg-[#1A1A1A] dark:text-white dark:placeholder:text-[#6B7280] rounded-lg px-4 py-3 focus:border-[#0A0A0A] dark:focus:border-[#555] focus:ring-[#0A0A0A]/10"
                   />
                 </div>
 
@@ -200,7 +200,7 @@ export default function Generator() {
                   disabled={!canSubmit}
                   whileHover={canSubmit ? { y: -1 } : {}}
                   whileTap={canSubmit ? { scale: 0.98 } : {}}
-                  className="w-full py-3.5 bg-[#0A0A0A] text-white rounded-lg font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#1a1a1a]"
+                  className="w-full py-3.5 bg-[#0A0A0A] dark:bg-white text-white dark:text-[#0A0A0A] rounded-lg font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#1a1a1a] dark:hover:bg-[#E5E7EB]"
                 >
                   {isSubmitting ? (
                     <motion.span
@@ -225,7 +225,7 @@ export default function Generator() {
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
                     transition={{ duration: 0.3 }}
-                    className="w-72 h-96 rounded-lg overflow-hidden shadow-xl border border-[#E5E7EB]"
+                    className="w-72 h-96 rounded-lg overflow-hidden shadow-xl border border-[#E5E7EB] dark:border-[#2A2A2A]"
                   >
                     {selectedTheme && (
                       <PosterMockup

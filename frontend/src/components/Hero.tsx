@@ -28,7 +28,7 @@ export default function Hero() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="text-5xl md:text-6xl font-bold text-[#0A0A0A] text-center tracking-tight"
+        className="text-5xl md:text-6xl font-bold text-[#0A0A0A] dark:text-[#F9FAFB] text-center tracking-tight"
       >
         Turn any city into art.
       </motion.h1>
@@ -36,7 +36,7 @@ export default function Hero() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.15 }}
-        className="mt-6 text-lg md:text-xl text-[#6B7280] text-center max-w-xl"
+        className="mt-6 text-lg md:text-xl text-[#6B7280] dark:text-[#9CA3AF] text-center max-w-xl"
       >
         Generate beautiful, minimalist street-map posters of any city in the world.
         Choose a theme, pick a radius, and get it delivered to your inbox.
@@ -46,7 +46,7 @@ export default function Hero() {
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.3 }}
-        className="mt-12 w-64 h-80 md:w-72 md:h-96 rounded-lg bg-[#F8F9FA] border border-[#E5E7EB] shadow-xl p-3 flex flex-col"
+        className="mt-12 w-64 h-80 md:w-72 md:h-96 rounded-lg bg-[#F8F9FA] dark:bg-[#111111] border border-[#E5E7EB] dark:border-[#2A2A2A] shadow-xl p-3 flex flex-col"
       >
         <div className="flex-1 rounded overflow-hidden relative">
           <AnimatePresence mode="wait">
@@ -79,10 +79,10 @@ export default function Hero() {
             transition={{ duration: 0.4 }}
             className="text-center"
           >
-            <p className="text-sm text-[#6B7280]">
-              <span className="font-medium text-[#0A0A0A]">{current.city}</span>
+            <p className="text-sm text-[#6B7280] dark:text-[#9CA3AF]">
+              <span className="font-medium text-[#0A0A0A] dark:text-[#F9FAFB]">{current.city}</span>
               {' '}
-              <span className="text-[#9CA3AF]">/</span>
+              <span className="text-[#9CA3AF] dark:text-[#6B7280]">/</span>
               {' '}
               {current.theme}
             </p>
@@ -99,7 +99,7 @@ export default function Hero() {
         <motion.div
           animate={{ y: [0, 8, 0] }}
           transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
-          className="text-[#9CA3AF]"
+          className="text-[#9CA3AF] dark:text-[#6B7280]"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />

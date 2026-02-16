@@ -20,9 +20,9 @@ const steps = [
 
 export default function HowItWorks() {
   return (
-    <section className="py-24 px-6 bg-[#F8F9FA]">
+    <section className="py-24 px-6 bg-[#F8F9FA] dark:bg-[#111111] transition-colors">
       <div className="max-w-4xl mx-auto">
-        <h2 className="text-3xl md:text-4xl font-bold text-[#0A0A0A] text-center mb-16">
+        <h2 className="text-3xl md:text-4xl font-bold text-[#0A0A0A] dark:text-[#F9FAFB] text-center mb-16">
           How it works
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -35,11 +35,11 @@ export default function HowItWorks() {
               transition={{ delay: i * 0.15 }}
               className="text-center"
             >
-              <div className="w-10 h-10 rounded-full bg-[#0A0A0A] text-white flex items-center justify-center text-sm font-bold mx-auto mb-4">
+              <div className="w-10 h-10 rounded-full bg-[#0A0A0A] dark:bg-white text-white dark:text-[#0A0A0A] flex items-center justify-center text-sm font-bold mx-auto mb-4">
                 {step.number}
               </div>
-              <h3 className="font-semibold text-[#0A0A0A] mb-2">{step.title}</h3>
-              <p className="text-sm text-[#6B7280]">{step.description}</p>
+              <h3 className="font-semibold text-[#0A0A0A] dark:text-[#F9FAFB] mb-2">{step.title}</h3>
+              <p className="text-sm text-[#6B7280] dark:text-[#9CA3AF]">{step.description}</p>
             </motion.div>
           ))}
         </div>

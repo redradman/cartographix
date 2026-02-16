@@ -7,10 +7,11 @@ import ThemeSelector from './ThemeSelector';
 import ThemeSkeleton from './ThemeSkeleton';
 import DistanceSlider from './DistanceSlider';
 import FormatSelector from './FormatSelector';
+import LandmarkInput from './LandmarkInput';
 import StatusDisplay from './StatusDisplay';
 import Toast from './Toast';
 import PosterMockup from './PosterMockup';
-import type { Theme } from '@/lib/api';
+import type { Theme, Landmark } from '@/lib/api';
 import { fetchThemes, generatePoster, fetchStatus } from '@/lib/api';
 
 type AppState = 'default' | 'generating' | 'completed' | 'error' | 'rate_limited';
@@ -43,6 +44,7 @@ export default function Generator() {
   const [distance, setDistance] = useState(10000);
   const [email, setEmail] = useState('');
   const [outputFormat, setOutputFormat] = useState('instagram');
+  const [landmarks, setLandmarks] = useState<Landmark[]>([]);
   const [customTitle, setCustomTitle] = useState('');
   const [jobId, setJobId] = useState<string | null>(null);
   const [appState, setAppState] = useState<AppState>('default');
@@ -94,7 +96,7 @@ export default function Generator() {
     if (!city.trim()) return;
     setIsSubmitting(true);
     try {
-      const result = await generatePoster({ city, country, theme, distance, email, output_format: outputFormat, custom_title: customTitle });
+      const result = await generatePoster({ city, country, theme, distance, email, output_format: outputFormat, custom_title: customTitle, landmarks });
       setJobId(result.job_id);
       setAppState('generating');
       pollStatus(result.job_id);
@@ -116,6 +118,7 @@ export default function Generator() {
     setCountry('');
     setEmail('');
     setOutputFormat('instagram');
+    setLandmarks([]);
     setCustomTitle('');
     setJobId(null);
     setErrorMessage('');
@@ -189,6 +192,13 @@ export default function Generator() {
                 </div>
 
                 <DistanceSlider value={distance} onChange={setDistance} />
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-[#0A0A0A] dark:text-[#F9FAFB]">
+                    Landmarks <span className="text-[#9CA3AF] dark:text-[#6B7280] font-normal">(optional, up to 5)</span>
+                  </Label>
+                  <LandmarkInput landmarks={landmarks} onChange={setLandmarks} />
+                </div>
 
                 <div className="space-y-3">
                   <Label className="text-sm font-medium text-[#0A0A0A] dark:text-[#F9FAFB]">Output format</Label>

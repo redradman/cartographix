@@ -46,6 +46,7 @@ def _process_job(job_id: str) -> None:
             distance=job.distance,
             output_format=job.output_format,
             custom_title=job.custom_title,
+            landmarks=job.landmarks,
             on_stage=_update_stage,
         )
         job.result_path = result_path
@@ -91,6 +92,15 @@ async def generate(req: GenerateRequest, background_tasks: BackgroundTasks) -> G
             detail={"error": "rate_limited", "detail": "Maximum 3 requests per email per 24 hours"},
         )
 
+    # Validate landmarks count
+    if len(req.landmarks) > 5:
+        raise HTTPException(
+            status_code=422,
+            detail={"error": "too_many_landmarks", "detail": "Maximum 5 landmarks allowed"},
+        )
+
+    landmarks_dicts = [lm.model_dump() for lm in req.landmarks]
+
     job = job_store.create(
         city=req.city,
         country=req.country,
@@ -99,6 +109,7 @@ async def generate(req: GenerateRequest, background_tasks: BackgroundTasks) -> G
         email=req.email,
         output_format=req.output_format,
         custom_title=req.custom_title,
+        landmarks=landmarks_dicts,
     )
 
     background_tasks.add_task(_process_job, job.job_id)

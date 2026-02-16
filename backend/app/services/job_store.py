@@ -13,6 +13,7 @@ class Job:
         email: Optional[str],
         output_format: str = "instagram",
         custom_title: str = "",
+        landmarks: Optional[List[dict]] = None,
     ) -> None:
         self.job_id: str = uuid.uuid4().hex
         self.city: str = city
@@ -22,6 +23,7 @@ class Job:
         self.email: Optional[str] = email
         self.output_format: str = output_format
         self.custom_title: str = custom_title
+        self.landmarks: List[dict] = landmarks or []
         self.status: str = "queued"
         self.stage: Optional[str] = None
         self.result_path: Optional[str] = None
@@ -47,6 +49,7 @@ class JobStore:
         email: Optional[str],
         output_format: str = "instagram",
         custom_title: str = "",
+        landmarks: Optional[List[dict]] = None,
     ) -> Job:
         job = Job(
             city=city,
@@ -56,6 +59,7 @@ class JobStore:
             email=email,
             output_format=output_format,
             custom_title=custom_title,
+            landmarks=landmarks,
         )
         self._jobs[job.job_id] = job
         return job

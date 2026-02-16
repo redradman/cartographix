@@ -2,6 +2,12 @@ from typing import List, Optional
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
+class LandmarkItem(BaseModel):
+    name: str = Field(default="", max_length=100)
+    lat: float = Field(ge=-90, le=90)
+    lon: float = Field(ge=-180, le=180)
+
+
 class GenerateRequest(BaseModel):
     city: str = Field(..., min_length=1, max_length=100)
     country: str = Field(default="", max_length=100)
@@ -10,6 +16,7 @@ class GenerateRequest(BaseModel):
     email: Optional[EmailStr] = None
     output_format: str = Field(default="instagram")
     custom_title: str = Field(default="", max_length=100)
+    landmarks: List[LandmarkItem] = Field(default_factory=list, max_length=5)
 
     @field_validator("email", mode="before")
     @classmethod

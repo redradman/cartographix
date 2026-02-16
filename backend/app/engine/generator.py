@@ -43,6 +43,7 @@ def generate_poster(
     distance: int = 3000,
     output_format: str = "instagram",
     custom_title: str = "",
+    landmarks: Optional[List[dict]] = None,
     on_stage: Optional[Callable[[str], None]] = None,
 ) -> str:
     """Generate a styled city map poster and return the path to the PNG file.
@@ -151,19 +152,21 @@ def generate_poster(
         edge_colors = np.where(major, accent_color, np.where(mid, primary_color, secondary_color)).tolist()
         edge_widths = np.where(major, 2.5, np.where(mid, 1.5, 0.8)).tolist()
 
-        ox.plot_graph(
-            graph,
-            ax=ax,
-            node_size=0,
-            edge_color=edge_colors,
-            edge_linewidth=edge_widths,
-            bgcolor=bg_color,
-            show=False,
-            close=False,
-        )
+        # Plot edges directly from the GeoDataFrame in EPSG:4326 instead
+        # of using ox.plot_graph(), which internally reprojects to UTM.
+        # This keeps streets and landmarks in the same coordinate space.
+        for i, (_, edge) in enumerate(edges.iterrows()):
+            edge_geom = edge.geometry
+            xs, ys = edge_geom.xy
+            ax.plot(xs, ys, color=edge_colors[i], linewidth=edge_widths[i], solid_capstyle="round", zorder=1)
 
         ax.margins(0)
         ax.axis("off")
+
+        # Set explicit axis limits from the computed bounding box so that
+        # the map fills the entire figure regardless of edge extent
+        ax.set_xlim(west, east)
+        ax.set_ylim(south, north)
 
         # Enforce the desired aspect ratio by adjusting axis limits
         fig_w, fig_h = figsize
@@ -183,11 +186,21 @@ def generate_poster(
             y_center = (y_min + y_max) / 2
             ax.set_ylim(y_center - new_h / 2, y_center + new_h / 2)
 
-        # Override equal aspect set by ox.plot_graph — since we already
-        # fetch street data matching the output format's aspect ratio and
-        # enforce axis limits above, 'auto' lets the map fill the axes
-        # without matplotlib letterboxing it (which causes excess whitespace).
         ax.set_aspect("auto")
+
+        # Render landmark pins — coordinates are in the same EPSG:4326
+        # space as the edges, so lon/lat map directly to x/y
+        if landmarks:
+            for lm in landmarks:
+                ax.plot(
+                    lm["lon"], lm["lat"], "o",
+                    color=accent_color,
+                    markersize=8,
+                    markeredgecolor=bg_color,
+                    markeredgewidth=1.5,
+                    zorder=10,
+                    clip_on=True,
+                )
 
         fig.subplots_adjust(left=0, right=1, bottom=0.18, top=1)
 
@@ -199,18 +212,32 @@ def generate_poster(
         base_attr = 8
 
         title_text = custom_title if custom_title else city.upper()
-        # Letter-space Latin text
+        # Letter-space Latin text — adapt spacing to format width and name length
+        char_count = len(title_text)
         if all(ord(c) < 256 for c in title_text):
-            spaced_title = "  ".join(title_text)
+            if aspect_ratio < 0.8:
+                # Narrow formats (A4, mobile wallpaper): no spacing for long names
+                if char_count > 8:
+                    spaced_title = title_text
+                else:
+                    spaced_title = " ".join(title_text)
+            elif aspect_ratio < 1.2:
+                # Medium formats (square): single space
+                spaced_title = " ".join(title_text)
+            else:
+                # Wide formats (landscape): double space
+                spaced_title = "  ".join(title_text)
         else:
             spaced_title = title_text
 
-        # Dynamic size adjustment for long names
-        char_count = len(title_text)
+        # Dynamic size adjustment — scale aggressively for narrow+long combos
         adjusted_main = base_main * scale_factor
         if char_count > 10:
             length_factor = 10 / char_count
             adjusted_main = max(adjusted_main * length_factor, 10 * scale_factor)
+        # Scale down proportionally for narrow formats (floor at 0.5)
+        if aspect_ratio < 1.0:
+            adjusted_main *= max(aspect_ratio, 0.5)
 
         ax.text(0.5, 0.14, spaced_title, transform=ax.transAxes,
                 color=primary_color, ha="center", va="center",

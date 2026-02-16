@@ -4,6 +4,12 @@ export interface Theme {
   preview_colors: string[];
 }
 
+export interface Landmark {
+  name: string;
+  lat: number;
+  lon: number;
+}
+
 export interface GenerateRequest {
   city: string;
   country: string;
@@ -12,6 +18,7 @@ export interface GenerateRequest {
   email: string;
   output_format: string;
   custom_title: string;
+  landmarks: Landmark[];
 }
 
 export interface GenerateResponse {

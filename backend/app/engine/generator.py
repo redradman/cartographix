@@ -149,15 +149,38 @@ def generate_poster(
         ax.margins(0.02)
         ax.axis("off")
 
+        # Enforce the desired aspect ratio by adjusting axis limits
+        # Without this, bbox_inches="tight" would crop to the graph's
+        # natural (roughly square) extent, ignoring the figsize.
+        fig_w, fig_h = figsize
+        target_ratio = fig_w / fig_h  # width / height
+        x_min, x_max = ax.get_xlim()
+        y_min, y_max = ax.get_ylim()
+        data_w = x_max - x_min
+        data_h = y_max - y_min
+        data_ratio = data_w / data_h
+
+        if data_ratio < target_ratio:
+            # Need wider x — expand x limits
+            new_w = data_h * target_ratio
+            x_center = (x_min + x_max) / 2
+            ax.set_xlim(x_center - new_w / 2, x_center + new_w / 2)
+        else:
+            # Need taller y — expand y limits
+            new_h = data_w / target_ratio
+            y_center = (y_min + y_max) / 2
+            ax.set_ylim(y_center - new_h / 2, y_center + new_h / 2)
+
+        # Make axes fill the figure, leaving only top space for the title
+        fig.subplots_adjust(left=0.02, right=0.98, bottom=0.02, top=0.92)
+
         # Save to file
         filename = f"{city.lower().replace(' ', '_')}_{theme}_{uuid.uuid4().hex[:8]}.png"
         output_path = OUTPUT_DIR / filename
         fig.savefig(
             str(output_path),
             dpi=250 if output_format in ("portrait", "phone", "story") else 200,
-            bbox_inches="tight",
             facecolor=bg_color,
-            pad_inches=0.5,
         )
         plt.close(fig)
     except ValueError:

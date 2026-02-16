@@ -148,12 +148,18 @@ export default function PosterMockup({ colors, cityName, className = '' }: Poste
           />
         </svg>
       </div>
-      <div className="px-4 py-3 flex items-end" style={{ backgroundColor: bg }}>
+      <div className="px-4 py-3 flex flex-col items-center gap-0.5" style={{ backgroundColor: bg }}>
         <p
-          className="text-[10px] tracking-[0.25em] uppercase font-medium"
+          className="text-[11px] tracking-[0.35em] uppercase font-bold font-mono"
           style={{ color: primary }}
         >
           {cityName || 'Your City'}
+        </p>
+        <p
+          className="text-[7px] tracking-[0.15em] uppercase font-mono"
+          style={{ color: primary, opacity: 0.7 }}
+        >
+          48.8566° N, 2.3522° E
         </p>
       </div>
     </div>

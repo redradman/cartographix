@@ -25,6 +25,9 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api")
 
 
+ALLOWED_OUTPUT_FORMATS = ["square", "landscape", "portrait", "phone", "story"]
+
+
 def _process_job(job_id: str) -> None:
     """Background task to generate a poster and optionally send email."""
     job = job_store.get(job_id)
@@ -41,6 +44,8 @@ def _process_job(job_id: str) -> None:
             country=job.country,
             theme=job.theme,
             distance=job.distance,
+            output_format=job.output_format,
+            custom_title=job.custom_title,
             on_stage=_update_stage,
         )
         job.result_path = result_path
@@ -72,6 +77,13 @@ async def generate(req: GenerateRequest, background_tasks: BackgroundTasks) -> G
             detail={"error": "invalid_theme", "detail": f"Unknown theme: {req.theme}"},
         )
 
+    # Validate output format
+    if req.output_format not in ALLOWED_OUTPUT_FORMATS:
+        raise HTTPException(
+            status_code=422,
+            detail={"error": "invalid_output_format", "detail": f"Unknown output format: {req.output_format}. Allowed: {ALLOWED_OUTPUT_FORMATS}"},
+        )
+
     # Rate limit by email
     if req.email and not rate_limiter.is_allowed(req.email):
         raise HTTPException(
@@ -85,6 +97,8 @@ async def generate(req: GenerateRequest, background_tasks: BackgroundTasks) -> G
         theme=req.theme,
         distance=req.distance,
         email=req.email,
+        output_format=req.output_format,
+        custom_title=req.custom_title,
     )
 
     background_tasks.add_task(_process_job, job.job_id)
@@ -119,6 +133,7 @@ async def get_status(job_id: str) -> StatusResponse:
         poster_url=poster_url,
         stage=job.stage,
         error_message=job.error,
+        share_id=job.share_id,
     )
 
 

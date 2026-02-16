@@ -24,6 +24,9 @@ RUN pip install --no-cache-dir -r requirements.txt && \
     apt-get purge -y --auto-remove g++ build-essential libffi-dev && \
     rm -rf /var/lib/apt/lists/*
 
+# Copy font files
+COPY backend/fonts/ fonts/
+
 # Copy application code
 COPY backend/ .
 

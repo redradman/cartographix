@@ -27,7 +27,7 @@ export default function Navbar({ isDark, onToggleDark }: NavbarProps) {
             )}
           </button>
           <a
-            href="https://github.com"
+            href="https://github.com/redradman/cartographix"
             target="_blank"
             rel="noopener noreferrer"
             className="text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#0A0A0A] dark:hover:text-white transition-colors"

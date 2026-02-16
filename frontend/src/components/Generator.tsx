@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import CityAutocomplete from './CityAutocomplete';
 import ThemeSelector from './ThemeSelector';
 import ThemeSkeleton from './ThemeSkeleton';
 import DistanceSlider from './DistanceSlider';
@@ -145,10 +146,14 @@ export default function Generator() {
                   <Label htmlFor="city" className="text-sm font-medium text-[#0A0A0A]">
                     City
                   </Label>
-                  <Input
+                  <CityAutocomplete
                     id="city"
                     value={city}
-                    onChange={(e) => setCity(e.target.value)}
+                    onChange={setCity}
+                    onSelectSuggestion={(c, co) => {
+                      setCity(c);
+                      setCountry(co);
+                    }}
                     className="border-[#E5E7EB] rounded-lg px-4 py-3 focus:border-[#0A0A0A] focus:ring-[#0A0A0A]/10"
                   />
                 </div>

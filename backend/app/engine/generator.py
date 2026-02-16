@@ -1,5 +1,6 @@
 import logging
 import os
+import signal
 import uuid
 from pathlib import Path
 from typing import Callable, List, Optional
@@ -15,6 +16,11 @@ logger = logging.getLogger(__name__)
 
 OUTPUT_DIR = Path(__file__).resolve().parent.parent.parent / "output"
 OUTPUT_DIR.mkdir(exist_ok=True)
+
+# Configure OSMnx settings for reliability
+ox.settings.timeout = 90
+ox.settings.use_cache = True
+ox.settings.log_console = True
 
 
 def generate_poster(
@@ -32,6 +38,7 @@ def generate_poster(
     def _set_stage(stage: str) -> None:
         if on_stage:
             on_stage(stage)
+        logger.info("Stage: %s", stage)
 
     if distance > 30000:
         logger.warning("Large distance requested (%d m) for %s — may be slow or fail", distance, city)
@@ -40,29 +47,33 @@ def generate_poster(
     bg_color, primary_color, secondary_color, accent_color = colors
 
     # Geocode the location
-    query = f"{city}, {country}"
+    query = f"{city}, {country}" if country else city
     logger.info("Geocoding: %s", query)
     _set_stage("geocoding")
     try:
         point = ox.geocode(query)
-    except Exception:
+    except Exception as e:
+        logger.error("Geocoding failed for '%s': %s", query, e)
         raise ValueError("City not found — check the spelling or try adding a country")
     lat, lng = point
+    logger.info("Geocoded %s to (%f, %f)", query, lat, lng)
 
-    # Fetch street network
-    logger.info("Fetching street network for %s (dist=%d)", query, distance)
+    # Fetch street network — use "all" type for better coverage, cap distance for speed
+    effective_distance = min(distance, 20000)
+    logger.info("Fetching street network for %s (dist=%d)", query, effective_distance)
     _set_stage("fetching_streets")
     try:
         graph = ox.graph_from_point(
             (lat, lng),
-            dist=distance,
-            network_type="drive",
+            dist=effective_distance,
+            network_type="all",
             simplify=True,
         )
     except MemoryError:
         raise ValueError("Area too large — try a smaller distance")
-    except Exception:
-        raise ValueError("Could not fetch street data — try a smaller distance")
+    except Exception as e:
+        logger.error("Street fetch failed: %s", e)
+        raise ValueError("Could not fetch street data — try a smaller distance or different city")
 
     # Render poster
     _set_stage("rendering")

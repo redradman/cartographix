@@ -29,13 +29,13 @@ function Checkmark() {
       initial={{ scale: 0 }}
       animate={{ scale: 1 }}
       transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-      className="w-16 h-16 bg-[#0A0A0A] dark:bg-white rounded-full flex items-center justify-center"
+      className="w-16 h-16 bg-[#10B981] rounded-full flex items-center justify-center"
     >
       <motion.svg
         initial={{ pathLength: 0 }}
         animate={{ pathLength: 1 }}
         transition={{ duration: 0.4, delay: 0.2 }}
-        className="w-8 h-8 text-white dark:text-[#0A0A0A]"
+        className="w-8 h-8 text-white"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -79,9 +79,10 @@ export default function StatusDisplay({ state, city, stage, email, posterUrl, er
       {state === 'generating' && (
         <motion.div
           key="generating"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.3 }}
           className="flex flex-col items-center justify-center py-16 gap-6"
         >
           <Spinner />
@@ -95,9 +96,10 @@ export default function StatusDisplay({ state, city, stage, email, posterUrl, er
       {state === 'completed' && (
         <motion.div
           key="completed"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.3 }}
           className="flex flex-col items-center justify-center py-16 gap-6"
         >
           <Checkmark />
@@ -143,9 +145,10 @@ export default function StatusDisplay({ state, city, stage, email, posterUrl, er
       {state === 'error' && (
         <motion.div
           key="error"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.3 }}
           className="flex flex-col items-center justify-center py-16 gap-4"
         >
           <div className="w-12 h-12 rounded-full bg-red-50 dark:bg-red-950 flex items-center justify-center">
@@ -166,9 +169,10 @@ export default function StatusDisplay({ state, city, stage, email, posterUrl, er
       {state === 'rate_limited' && (
         <motion.div
           key="rate_limited"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.3 }}
           className="flex flex-col items-center justify-center py-16 gap-4"
         >
           <div className="w-12 h-12 rounded-full bg-amber-50 dark:bg-amber-950 flex items-center justify-center">

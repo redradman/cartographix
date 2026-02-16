@@ -137,7 +137,8 @@ export default function Generator() {
               key="form"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+              exit={{ opacity: 0, x: -30 }}
+              transition={{ duration: 0.3 }}
               className="grid grid-cols-1 lg:grid-cols-2 gap-12"
             >
               {/* Form */}
@@ -203,13 +204,13 @@ export default function Generator() {
                   className="w-full py-3.5 bg-[#0A0A0A] dark:bg-white text-white dark:text-[#0A0A0A] rounded-lg font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#1a1a1a] dark:hover:bg-[#E5E7EB]"
                 >
                   {isSubmitting ? (
-                    <motion.span
-                      initial={{ opacity: 1 }}
-                      animate={{ opacity: 0.5 }}
-                      transition={{ repeat: Infinity, repeatType: 'reverse', duration: 0.8 }}
-                    >
+                    <span className="inline-flex items-center gap-2">
+                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
                       Generating...
-                    </motion.span>
+                    </span>
                   ) : (
                     'Generate poster'
                   )}
@@ -239,6 +240,12 @@ export default function Generator() {
               </div>
             </motion.div>
           ) : (
+            <motion.div
+              key="status"
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3 }}
+            >
             <StatusDisplay
               state={appState}
               city={city}
@@ -249,6 +256,7 @@ export default function Generator() {
               onRetry={handleRetry}
               onReset={handleReset}
             />
+            </motion.div>
           )}
         </AnimatePresence>
       </div>

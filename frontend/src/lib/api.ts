@@ -85,27 +85,12 @@ export interface ShareResponse {
   share_url: string;
 }
 
-export interface GalleryItem {
-  share_id: string;
-  city: string;
-  country: string;
-  theme: string;
-  poster_url: string;
-  created_at: string;
-}
-
-export async function sharePoster(jobId: string, galleryOptIn: boolean): Promise<ShareResponse> {
+export async function sharePoster(jobId: string): Promise<ShareResponse> {
   const res = await fetch(`/api/poster/${jobId}/share`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ gallery_opt_in: galleryOptIn }),
+    body: JSON.stringify({}),
   });
   if (!res.ok) throw new Error('Failed to share poster');
-  return res.json();
-}
-
-export async function fetchGallery(limit = 20, offset = 0): Promise<{ posters: GalleryItem[]; total: number }> {
-  const res = await fetch(`/api/gallery?limit=${limit}&offset=${offset}`);
-  if (!res.ok) throw new Error('Failed to fetch gallery');
   return res.json();
 }

@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 
 class Job:
@@ -29,7 +29,6 @@ class Job:
         self.result_path: Optional[str] = None
         self.error: Optional[str] = None
         self.share_id: Optional[str] = None
-        self.gallery_opt_in: bool = False
         self.created_at: str = datetime.utcnow().isoformat()
 
 
@@ -67,17 +66,15 @@ class JobStore:
     def get(self, job_id: str) -> Optional[Job]:
         return self._jobs.get(job_id)
 
-    def share(self, job_id: str, gallery_opt_in: bool) -> Optional[str]:
+    def share(self, job_id: str) -> Optional[str]:
         """Generate a share_id for a completed job. Returns share_id."""
         job = self._jobs.get(job_id)
         if not job or job.status != "completed":
             return None
         if job.share_id:
-            job.gallery_opt_in = job.gallery_opt_in or gallery_opt_in
             return job.share_id
         share_id = uuid.uuid4().hex[:12]
         job.share_id = share_id
-        job.gallery_opt_in = gallery_opt_in
         self._share_index[share_id] = job_id
         return share_id
 
@@ -87,16 +84,6 @@ class JobStore:
         if not job_id:
             return None
         return self._jobs.get(job_id)
-
-    def list_gallery(self, limit: int = 20, offset: int = 0) -> Tuple[List[Job], int]:
-        """Return gallery-opted-in completed jobs, newest first."""
-        gallery_jobs = [
-            job for job in self._jobs.values()
-            if job.gallery_opt_in and job.status == "completed" and job.share_id
-        ]
-        gallery_jobs.sort(key=lambda j: j.created_at, reverse=True)
-        total = len(gallery_jobs)
-        return gallery_jobs[offset:offset + limit], total
 
 
 job_store = JobStore()

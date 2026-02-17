@@ -1,26 +1,24 @@
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
-const HERO_POSTERS = [
+const ROW_1 = [
   { city: 'Tokyo', slug: 'tokyo', theme: 'Midnight', themeId: 'midnight' },
   { city: 'Paris', slug: 'paris', theme: 'Classic', themeId: 'classic' },
   { city: 'New York', slug: 'new_york', theme: 'Blueprint', themeId: 'blueprint' },
   { city: 'London', slug: 'london', theme: 'Monochrome', themeId: 'monochrome' },
   { city: 'Barcelona', slug: 'barcelona', theme: 'Sunset', themeId: 'sunset' },
+  { city: 'Berlin', slug: 'berlin', theme: 'Cyberpunk', themeId: 'cyberpunk' },
+];
+
+const ROW_2 = [
+  { city: 'Dubai', slug: 'dubai', theme: 'Desert', themeId: 'desert' },
+  { city: 'Sydney', slug: 'sydney', theme: 'Ocean', themeId: 'ocean' },
+  { city: 'Singapore', slug: 'singapore', theme: 'Neon', themeId: 'neon' },
+  { city: 'Madrid', slug: 'madrid', theme: 'Vintage', themeId: 'vintage' },
+  { city: 'Beijing', slug: 'beijing', theme: 'Arctic', themeId: 'arctic' },
+  { city: 'Tokyo', slug: 'tokyo', theme: 'Watercolor', themeId: 'watercolor' },
 ];
 
 export default function Hero() {
-  const [index, setIndex] = useState(0);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setIndex((prev) => (prev + 1) % HERO_POSTERS.length);
-    }, 4000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const current = HERO_POSTERS[index];
-
   return (
     <section className="min-h-screen flex flex-col items-center justify-center px-6 pt-16">
       <motion.h1
@@ -41,53 +39,64 @@ export default function Hero() {
         Choose a theme, pick a radius, and get it delivered to your inbox.
       </motion.p>
 
+      {/* Infinite marquee */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.3 }}
-        className="mt-12 w-64 h-80 md:w-72 md:h-96 rounded-lg bg-[#F8F9FA] dark:bg-[#111111] border border-[#E5E7EB] dark:border-[#2A2A2A] shadow-xl p-3 flex flex-col"
+        className="mt-12 w-full max-w-5xl relative overflow-hidden"
       >
-        <div className="flex-1 rounded overflow-hidden relative">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={index}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.6 }}
-              className="absolute inset-0"
-            >
-              <img
-                src={`/previews/${current.slug}/${current.themeId}.jpg`}
-                alt={`${current.city} ${current.theme} poster`}
-                className="w-full h-full object-cover"
-              />
-            </motion.div>
-          </AnimatePresence>
+        {/* Left fade */}
+        <div className="absolute left-0 top-0 bottom-0 w-24 md:w-32 z-10 pointer-events-none bg-gradient-to-r from-white dark:from-[#0A0A0A] to-transparent" />
+        {/* Right fade */}
+        <div className="absolute right-0 top-0 bottom-0 w-24 md:w-32 z-10 pointer-events-none bg-gradient-to-l from-white dark:from-[#0A0A0A] to-transparent" />
+
+        {/* Row 1 — scrolls left */}
+        <div className="flex gap-6 hover:[animation-play-state:paused] [animation:marquee_35s_linear_infinite] w-max">
+          {[...ROW_1, ...ROW_1].map((poster, i) => (
+            <div key={i} className="flex-shrink-0 flex flex-col items-center">
+              <div className="w-44 h-60 rounded-lg overflow-hidden border border-[#E5E7EB] dark:border-[#2A2A2A] shadow-lg bg-[#F8F9FA] dark:bg-[#111111]">
+                <img
+                  src={`/previews/${poster.slug}/${poster.themeId}.jpg`}
+                  alt={`${poster.city} ${poster.theme} poster`}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              </div>
+              <p className="mt-2 text-sm text-[#6B7280] dark:text-[#9CA3AF]">
+                <span className="font-medium text-[#0A0A0A] dark:text-[#F9FAFB]">{poster.city}</span>
+                {' '}
+                <span className="text-[#9CA3AF] dark:text-[#6B7280]">/</span>
+                {' '}
+                {poster.theme}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* Row 2 — scrolls right */}
+        <div className="flex gap-6 mt-6 hover:[animation-play-state:paused] [animation:marquee-reverse_35s_linear_infinite] w-max">
+          {[...ROW_2, ...ROW_2].map((poster, i) => (
+            <div key={i} className="flex-shrink-0 flex flex-col items-center">
+              <div className="w-44 h-60 rounded-lg overflow-hidden border border-[#E5E7EB] dark:border-[#2A2A2A] shadow-lg bg-[#F8F9FA] dark:bg-[#111111]">
+                <img
+                  src={`/previews/${poster.slug}/${poster.themeId}.jpg`}
+                  alt={`${poster.city} ${poster.theme} poster`}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              </div>
+              <p className="mt-2 text-sm text-[#6B7280] dark:text-[#9CA3AF]">
+                <span className="font-medium text-[#0A0A0A] dark:text-[#F9FAFB]">{poster.city}</span>
+                {' '}
+                <span className="text-[#9CA3AF] dark:text-[#6B7280]">/</span>
+                {' '}
+                {poster.theme}
+              </p>
+            </div>
+          ))}
         </div>
       </motion.div>
-
-      {/* City + theme caption */}
-      <div className="mt-4 h-10 flex items-center justify-center">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={index}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.4 }}
-            className="text-center"
-          >
-            <p className="text-sm text-[#6B7280] dark:text-[#9CA3AF]">
-              <span className="font-medium text-[#0A0A0A] dark:text-[#F9FAFB]">{current.city}</span>
-              {' '}
-              <span className="text-[#9CA3AF] dark:text-[#6B7280]">/</span>
-              {' '}
-              {current.theme}
-            </p>
-          </motion.div>
-        </AnimatePresence>
-      </div>
 
       <motion.div
         initial={{ opacity: 0 }}

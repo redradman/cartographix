@@ -235,15 +235,25 @@ export default function Generator() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-medium text-[#0A0A0A] dark:text-[#F9FAFB]">
-                    Email <span className="text-[#9CA3AF] dark:text-[#6B7280] font-normal">(optional)</span>
-                  </Label>
+                  <div className="flex items-center gap-1.5">
+                    <Label htmlFor="email" className="text-sm font-medium text-[#0A0A0A] dark:text-[#F9FAFB]">
+                      Email <span className="text-[#9CA3AF] dark:text-[#6B7280] font-normal">(optional)</span>
+                    </Label>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <CircleHelp className="w-3.5 h-3.5 text-[#9CA3AF] dark:text-[#6B7280] cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-[260px] text-center">
+                        <p>Generation can take a while — we'll email your poster so you don't have to wait. No tracker, no mailing list. Check spam if you don't see it.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
                   <Input
                     id="email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Optional — we'll email you a copy too"
+                    placeholder="We'll send your poster — no spam, ever"
                     className="border-[#E5E7EB] dark:border-[#2A2A2A] dark:bg-[#1A1A1A] dark:text-white dark:placeholder:text-[#6B7280] rounded-lg px-4 py-3 focus:border-[#0A0A0A] dark:focus:border-[#555] focus:ring-[#0A0A0A]/10"
                   />
                 </div>

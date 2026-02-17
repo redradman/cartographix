@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion';
 import type { Theme } from '@/lib/api';
 import ThemeCard from './ThemeCard';
 
@@ -7,18 +8,36 @@ interface ThemeSelectorProps {
   onSelect: (id: string) => void;
 }
 
+const container = {
+  hidden: {},
+  show: {
+    transition: { staggerChildren: 0.03 },
+  },
+};
+
+const item = {
+  hidden: { opacity: 0, y: 8 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' } },
+};
+
 export default function ThemeSelector({ themes, selected, onSelect }: ThemeSelectorProps) {
   return (
-    <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-4">
+    <motion.div
+      className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-4"
+      variants={container}
+      initial="hidden"
+      animate="show"
+    >
       {themes.map((theme) => (
-        <ThemeCard
-          key={theme.id}
-          name={theme.name}
-          colors={theme.preview_colors}
-          selected={selected === theme.id}
-          onClick={() => onSelect(theme.id)}
-        />
+        <motion.div key={theme.id} variants={item}>
+          <ThemeCard
+            name={theme.name}
+            colors={theme.preview_colors}
+            selected={selected === theme.id}
+            onClick={() => onSelect(theme.id)}
+          />
+        </motion.div>
       ))}
-    </div>
+    </motion.div>
   );
 }

@@ -46,6 +46,7 @@ async def geocode(q: str = Query(..., min_length=2)) -> List[GeocodeSuggestion]:
         raise HTTPException(status_code=502, detail="Geocoding service unavailable")
 
     results: List[GeocodeSuggestion] = []
+    seen: set[str] = set()
     for item in resp.json():
         addr = item.get("address", {})
         city = (
@@ -56,6 +57,13 @@ async def geocode(q: str = Query(..., min_length=2)) -> List[GeocodeSuggestion]:
             or item.get("name", "")
         )
         country = addr.get("country", "")
+
+        # Deduplicate by city+country
+        key = f"{city.lower()}|{country.lower()}"
+        if key in seen:
+            continue
+        seen.add(key)
+
         results.append(
             GeocodeSuggestion(
                 display_name=item.get("display_name", ""),

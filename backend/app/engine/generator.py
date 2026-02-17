@@ -31,9 +31,32 @@ RESOLUTION_PRESETS = {
 }
 
 # Configure OSMnx settings for reliability
-ox.settings.timeout = 60
+ox.settings.timeout = 180
 ox.settings.use_cache = True
 ox.settings.log_console = True
+ox.settings.max_query_area_size = 50 * 1000 * 50 * 1000  # 50km × 50km
+ox.settings.overpass_rate_limit = False
+
+# Overpass mirrors — tried in order; fall back on 504/timeout
+_OVERPASS_ENDPOINTS = [
+    "https://overpass-api.de/api/interpreter",
+    "https://overpass.kumi.systems/api/interpreter",
+    "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+]
+
+def _call_with_overpass_fallback(fn, *args, **kwargs):
+    """Try fn() across multiple Overpass endpoints, falling back on failure."""
+    last_error = None
+    for endpoint in _OVERPASS_ENDPOINTS:
+        ox.settings.overpass_url = endpoint
+        try:
+            return fn(*args, **kwargs)
+        except Exception as e:
+            last_error = e
+            logger.warning("Overpass endpoint %s failed: %s — trying next", endpoint, e)
+    # All endpoints failed — raise the last error
+    raise last_error  # type: ignore[misc]
+
 
 # Module-level geocoding cache: query string -> (lat, lng)
 _geocode_cache: dict[str, tuple[float, float]] = {}
@@ -234,7 +257,8 @@ def generate_poster(
     _set_stage("fetching_streets")
     t1 = time.monotonic()
     try:
-        graph = ox.graph_from_point(
+        graph = _call_with_overpass_fallback(
+            ox.graph_from_point,
             center_point,
             dist=compensated_dist,
             dist_type="bbox",
@@ -255,7 +279,8 @@ def generate_poster(
     water_gdf = None
     parks_gdf = None
     try:
-        water_gdf = ox.features_from_point(
+        water_gdf = _call_with_overpass_fallback(
+            ox.features_from_point,
             center_point,
             tags={"natural": ["water", "bay", "strait"], "waterway": "riverbank"},
             dist=compensated_dist,
@@ -266,7 +291,8 @@ def generate_poster(
         logger.warning("Water fetch failed (non-fatal): %s", e)
 
     try:
-        parks_gdf = ox.features_from_point(
+        parks_gdf = _call_with_overpass_fallback(
+            ox.features_from_point,
             center_point,
             tags={"leisure": "park", "landuse": "grass"},
             dist=compensated_dist,

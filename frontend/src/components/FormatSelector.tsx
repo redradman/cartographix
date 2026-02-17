@@ -23,7 +23,7 @@ interface FormatSelectorProps {
 
 export default function FormatSelector({ selected, onSelect }: FormatSelectorProps) {
   return (
-    <div className="flex flex-wrap gap-3">
+    <div className="grid grid-cols-5 gap-3">
       {FORMATS.map((fmt) => {
         const isSelected = fmt.id === selected;
         const maxDim = 40;

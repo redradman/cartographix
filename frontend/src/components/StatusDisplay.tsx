@@ -1,6 +1,15 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { sharePoster } from '@/lib/api';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 type AppState = 'default' | 'generating' | 'completed' | 'error' | 'rate_limited';
 
@@ -16,14 +25,102 @@ interface StatusDisplayProps {
   onReset: () => void;
 }
 
-function Spinner() {
-  return (
-    <motion.div
-      animate={{ rotate: 360 }}
-      transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-      className="w-8 h-8 border-2 border-[#E5E7EB] dark:border-[#2A2A2A] border-t-[#0A0A0A] dark:border-t-white rounded-full"
-    />
-  );
+const PREVIEW_CITIES = [
+  'barcelona', 'beijing', 'berlin', 'dubai', 'london',
+  'madrid', 'new_york', 'paris', 'singapore', 'sydney', 'tokyo',
+];
+
+const THEMES = [
+  'default', 'classic', 'midnight', 'ocean', 'forest', 'sunset', 'neon',
+  'pastel', 'monochrome', 'vintage', 'arctic', 'desert', 'cyberpunk',
+  'watercolor', 'blueprint', 'autumn', 'minimal',
+];
+
+function formatCityName(slug: string): string {
+  return slug.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function formatThemeName(slug: string): string {
+  return slug.charAt(0).toUpperCase() + slug.slice(1);
+}
+
+interface PosterPreview {
+  city: string;
+  theme: string;
+  src: string;
+}
+
+const ITEMS_PER_PAGE = 6;
+
+// Build pages where each page has unique cities AND unique themes.
+// Round-robin: rotate city and theme offsets so no repeats within a page.
+const GALLERY_PAGES: PosterPreview[][] = (() => {
+  const pages: PosterPreview[][] = [];
+  const cityCount = PREVIEW_CITIES.length;
+  const themeCount = THEMES.length;
+  let cityOffset = 0;
+  let themeOffset = 0;
+
+  // We can generate many pages; cap at a reasonable number
+  const maxPages = Math.floor((cityCount * themeCount) / ITEMS_PER_PAGE);
+  const used = new Set<string>();
+
+  for (let p = 0; p < maxPages; p++) {
+    const page: PosterPreview[] = [];
+    const pageCities = new Set<string>();
+    const pageThemes = new Set<string>();
+
+    for (let i = 0; i < ITEMS_PER_PAGE; i++) {
+      // Find the next unused city+theme combo that doesn't clash with this page
+      let found = false;
+      for (let ct = 0; ct < cityCount * themeCount && !found; ct++) {
+        const ci = (cityOffset + i + ct) % cityCount;
+        const ti = (themeOffset + i + ct * 3) % themeCount; // stride of 3 for variety
+        const city = PREVIEW_CITIES[ci];
+        const theme = THEMES[ti];
+        const key = `${city}-${theme}`;
+
+        if (!used.has(key) && !pageCities.has(city) && !pageThemes.has(theme)) {
+          page.push({ city, theme, src: `/previews/${city}/${theme}.jpg` });
+          used.add(key);
+          pageCities.add(city);
+          pageThemes.add(theme);
+          found = true;
+        }
+      }
+    }
+
+    if (page.length === ITEMS_PER_PAGE) {
+      pages.push(page);
+    }
+
+    cityOffset = (cityOffset + 3) % cityCount;
+    themeOffset = (themeOffset + 5) % themeCount;
+  }
+
+  return pages;
+})();
+
+const TOTAL_PAGES = GALLERY_PAGES.length;
+
+const STAGE_ORDER = ['geocoding', 'fetching_streets', 'fetching_features', 'rendering', 'sending_email'];
+
+function getStageProgress(stage: string | undefined): number {
+  const idx = STAGE_ORDER.indexOf(stage || '');
+  if (idx < 0) return 0.05;
+  return Math.min((idx + 1) / STAGE_ORDER.length, 1);
+}
+
+function getStageMessage(stage: string | undefined, city: string): string {
+  switch (stage) {
+    case 'geocoding': return `Pinpointing ${city} on the globe...`;
+    case 'fetching_streets': return `Tracing the streets of ${city}...`;
+    case 'fetching_features': return 'Discovering rivers, parks & coastlines...';
+    case 'rendering': return 'Composing your poster in fine detail...';
+    case 'sending_email': return 'Delivering your creation...';
+    case 'done': return 'Almost there...';
+    default: return `Preparing your map of ${city}...`;
+  }
 }
 
 function Checkmark() {
@@ -57,16 +154,160 @@ function Checkmark() {
   );
 }
 
-function getStageMessage(stage: string | undefined, city: string): string {
-  switch (stage) {
-    case 'geocoding': return `Locating ${city} on the map...`;
-    case 'fetching_streets': return 'Fetching street data...';
-    case 'fetching_features': return 'Fetching water & parks...';
-    case 'rendering': return 'Rendering your poster...';
-    case 'sending_email': return 'Sending to your inbox...';
-    case 'done': return 'Almost there...';
-    default: return `Creating your poster of ${city}...`;
-  }
+function PosterGallery({ stage, city }: { stage?: string; city: string }) {
+  const [page, setPage] = useState(0);
+  const [selectedPoster, setSelectedPoster] = useState<PosterPreview | null>(null);
+
+  const progress = getStageProgress(stage);
+
+  const currentItems = GALLERY_PAGES[page] || [];
+
+  const prevPage = () => setPage(p => Math.max(0, p - 1));
+  const nextPage = () => setPage(p => Math.min(TOTAL_PAGES - 1, p + 1));
+
+  return (
+    <div className="flex flex-col items-center gap-8 py-8">
+      {/* Progress section */}
+      <div className="w-full max-w-md text-center space-y-3">
+        {/* Spinner + message */}
+        <div className="flex items-center justify-center gap-3">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ repeat: Infinity, duration: 1.2, ease: 'linear' }}
+            className="w-5 h-5 border-2 border-[#E5E7EB] dark:border-[#2A2A2A] border-t-[#0A0A0A] dark:border-t-white rounded-full flex-shrink-0"
+          />
+          <p className="text-sm text-[#0A0A0A] dark:text-[#F9FAFB]">
+            {getStageMessage(stage, city)}
+          </p>
+        </div>
+
+        {/* Progress bar */}
+        <div className="h-1.5 bg-[#E5E7EB] dark:bg-[#2A2A2A] rounded-full overflow-hidden">
+          <motion.div
+            className="h-full bg-[#0A0A0A] dark:bg-white rounded-full"
+            initial={{ width: '0%' }}
+            animate={{ width: `${progress * 100}%` }}
+            transition={{ duration: 0.8, ease: 'easeOut' }}
+          />
+        </div>
+
+        <p className="text-xs text-[#9CA3AF] dark:text-[#6B7280]">
+          This usually takes about a minute
+        </p>
+      </div>
+
+      {/* Divider + gallery header */}
+      <div className="w-full max-w-2xl">
+        <div className="border-t border-[#E5E7EB] dark:border-[#2A2A2A] pt-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-base font-semibold text-[#0A0A0A] dark:text-[#F9FAFB]">
+                Browse the poster library
+              </h3>
+              <p className="text-xs text-[#9CA3AF] dark:text-[#6B7280] mt-0.5">
+                Tap any poster to see it up close
+              </p>
+            </div>
+
+            {/* Pagination controls */}
+            <div className="flex items-center gap-1.5">
+              <Button
+                variant="outline"
+                size="icon-sm"
+                onClick={prevPage}
+                disabled={page === 0}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <span className="text-xs text-[#6B7280] dark:text-[#9CA3AF] tabular-nums min-w-[3rem] text-center">
+                {page + 1} / {TOTAL_PAGES}
+              </span>
+              <Button
+                variant="outline"
+                size="icon-sm"
+                onClick={nextPage}
+                disabled={page === TOTAL_PAGES - 1}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Poster grid */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={page}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.25 }}
+              className="grid grid-cols-2 sm:grid-cols-3 gap-3"
+            >
+              {currentItems.map((poster) => (
+                <Card
+                  key={`${poster.city}-${poster.theme}`}
+                  className="p-0 gap-0 overflow-hidden cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98]"
+                  onClick={() => setSelectedPoster(poster)}
+                >
+                  <img
+                    src={poster.src}
+                    alt={`${formatCityName(poster.city)} — ${formatThemeName(poster.theme)}`}
+                    className="w-full aspect-[3/4] object-cover"
+                    loading="lazy"
+                  />
+                  <div className="px-3 py-2">
+                    <p className="text-xs font-medium text-[#374151] dark:text-[#D1D5DB] truncate">
+                      {formatCityName(poster.city)}
+                    </p>
+                    <p className="text-[10px] text-[#9CA3AF] dark:text-[#6B7280]">
+                      {formatThemeName(poster.theme)}
+                    </p>
+                  </div>
+                </Card>
+              ))}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </div>
+
+      {/* Lightbox dialog */}
+      <Dialog open={!!selectedPoster} onOpenChange={(open) => { if (!open) setSelectedPoster(null); }}>
+        <DialogContent
+          showCloseButton={false}
+          className="sm:max-w-md p-0 overflow-hidden gap-0 bg-white dark:bg-[#111111] border-[#E5E7EB] dark:border-[#2A2A2A]"
+        >
+          {selectedPoster && (
+            <>
+              <div className="relative">
+                <img
+                  src={selectedPoster.src}
+                  alt={`${formatCityName(selectedPoster.city)} — ${formatThemeName(selectedPoster.theme)}`}
+                  className="w-full h-auto"
+                />
+                {/* Close button with solid background so it's visible on any poster */}
+                <button
+                  onClick={() => setSelectedPoster(null)}
+                  className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center transition-colors backdrop-blur-sm"
+                >
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="px-5 py-4">
+                <DialogTitle className="text-[#0A0A0A] dark:text-[#F9FAFB]">
+                  {formatCityName(selectedPoster.city)}
+                </DialogTitle>
+                <DialogDescription className="text-[#9CA3AF] dark:text-[#6B7280] mt-1">
+                  {formatThemeName(selectedPoster.theme)} theme
+                </DialogDescription>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
 }
 
 export default function StatusDisplay({ state, city, stage, email, posterUrl, errorMessage, jobId, onRetry, onReset }: StatusDisplayProps) {
@@ -105,13 +346,8 @@ export default function StatusDisplay({ state, city, stage, email, posterUrl, er
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
           transition={{ duration: 0.3 }}
-          className="flex flex-col items-center justify-center py-16 gap-6"
         >
-          <Spinner />
-          <p className="text-[#6B7280] dark:text-[#9CA3AF] text-center">
-            {getStageMessage(stage, city)}
-          </p>
-          <p className="text-sm text-[#9CA3AF] dark:text-[#6B7280]">This usually takes about a minute</p>
+          <PosterGallery stage={stage} city={city} />
         </motion.div>
       )}
 

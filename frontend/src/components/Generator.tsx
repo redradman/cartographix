@@ -314,6 +314,7 @@ export default function Generator() {
               posterUrl={posterUrl}
               errorMessage={errorMessage}
               jobId={jobId}
+
               onRetry={handleRetry}
               onReset={handleReset}
             />

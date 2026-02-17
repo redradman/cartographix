@@ -2,7 +2,6 @@ import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import Generator from './components/Generator';
 import HowItWorks from './components/HowItWorks';
-import Footer from './components/Footer';
 import BottomBanner from './components/BottomBanner';
 import { useDarkMode } from './hooks/useDarkMode';
 import { TooltipProvider } from './components/ui/tooltip';
@@ -17,7 +16,6 @@ export default function App() {
       <Hero />
       <Generator />
       <HowItWorks />
-      <Footer />
       <BottomBanner />
       <div className="h-10" />
     </div>

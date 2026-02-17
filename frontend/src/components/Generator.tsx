@@ -137,7 +137,6 @@ export default function Generator() {
     setErrorMessage('');
   };
 
-  const selectedTheme = themes.find((t) => t.id === theme);
   const canSubmit = city.trim().length > 0 && !isSubmitting;
 
   return (

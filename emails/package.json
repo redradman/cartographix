@@ -1,0 +1,14 @@
+{
+  "name": "cartographix-emails",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "dependencies": {
+    "@react-email/components": "^0.0.36",
+    "@react-email/render": "^1.0.5",
+    "esbuild": "^0.25.0",
+    "react": "^19.2.0"
+  }
+}

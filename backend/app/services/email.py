@@ -1,54 +1,164 @@
+import html
 import os
 import base64
 import logging
 from pathlib import Path
+from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
+# Resolve the pre-rendered React Email template once at import time.
+# In production (Docker), the template lives at /app/emails/poster-ready.html.
+# In local dev, it's at ../emails/dist/poster-ready.html relative to the repo root.
+_TEMPLATE_PATHS = [
+    Path("/app/emails/poster-ready.html"),
+    Path(__file__).resolve().parents[3] / "emails" / "dist" / "poster-ready.html",
+]
+_template_html: str | None = None
+for _p in _TEMPLATE_PATHS:
+    if _p.exists():
+        _template_html = _p.read_text("utf-8")
+        logger.info("Loaded email template from %s", _p)
+        break
 
-def _build_email_html(city: str, theme: str) -> str:
-    """Build a clean, branded HTML email body."""
+if _template_html is None:
+    logger.warning("React Email template not found, email will use fallback")
+
+# Inline styles matching the React Email template's detail rows
+_ROW_LABEL_STYLE = "font-size:13px;color:#a1a1aa;"
+_ROW_VALUE_STYLE = "font-size:13px;color:#18181b;font-weight:500;text-align:right;"
+_ROW_STYLE = "width:100%;"
+
+# Human-readable output format names
+_FORMAT_LABELS = {
+    "instagram": "Instagram (1080\u00d71080)",
+    "mobile_wallpaper": "Mobile Wallpaper (1080\u00d71920)",
+    "hd_wallpaper": "HD Wallpaper (1920\u00d71080)",
+    "4k_wallpaper": "4K Wallpaper (3840\u00d72160)",
+    "a4_print": "A4 Print (2480\u00d73508)",
+}
+
+
+def _detail_row(label: str, value: str, first: bool = False) -> str:
+    """Build one table-row for the details card."""
+    pad = "" if first else 'style="padding-top:8px;"'
+    safe_val = html.escape(value)
+    return (
+        f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" {pad}>'
+        f'<tr style="{_ROW_STYLE}">'
+        f'<td style="{_ROW_LABEL_STYLE}">{label}</td>'
+        f'<td style="{_ROW_VALUE_STYLE}">{safe_val}</td>'
+        f"</tr></table>"
+    )
+
+
+def _build_details_rows(
+    city: str,
+    theme_display: str,
+    custom_title: str = "",
+    output_format: str = "",
+    landmarks: Optional[List[dict]] = None,
+) -> str:
+    """Build the HTML for all detail rows, only including non-empty fields."""
+    rows: list[str] = []
+    rows.append(_detail_row("City", city, first=True))
+    rows.append(_detail_row("Theme", theme_display))
+
+    if custom_title:
+        rows.append(_detail_row("Title", custom_title))
+
+    if output_format and output_format != "instagram":
+        format_label = _FORMAT_LABELS.get(output_format, output_format.replace("_", " ").title())
+        rows.append(_detail_row("Format", format_label))
+
+    if landmarks:
+        names = [lm.get("name", "") for lm in landmarks if lm.get("name")]
+        if names:
+            rows.append(_detail_row("Landmarks", ", ".join(names)))
+
+    return "\n".join(rows)
+
+
+def _build_email_plain(
+    city: str,
+    theme: str,
+    custom_title: str = "",
+    output_format: str = "",
+    landmarks: Optional[List[dict]] = None,
+) -> str:
+    """Build a plain-text version of the email for multipart/alternative."""
     theme_display = theme.replace("_", " ").title() if theme else "Default"
+    lines = [
+        "Your poster is ready",
+        "",
+        f"Your custom map poster of {city} has been generated and is attached "
+        "to this email as a high-resolution PNG.",
+        "",
+        f"City: {city}",
+        f"Theme: {theme_display}",
+    ]
+    if custom_title:
+        lines.append(f"Title: {custom_title}")
+    if output_format and output_format != "instagram":
+        format_label = _FORMAT_LABELS.get(output_format, output_format.replace("_", " ").title())
+        lines.append(f"Format: {format_label}")
+    if landmarks:
+        names = [lm.get("name", "") for lm in landmarks if lm.get("name")]
+        if names:
+            lines.append(f"Landmarks: {', '.join(names)}")
+    lines += [
+        "",
+        "Make another poster: https://cartographix.radman.dev",
+        "",
+        "No tracking, no marketing — just your poster.",
+        "",
+        "Made by Radman — https://radman.dev",
+    ]
+    return "\n".join(lines)
+
+
+def _build_email_html(
+    city: str,
+    theme: str,
+    custom_title: str = "",
+    output_format: str = "",
+    landmarks: Optional[List[dict]] = None,
+) -> str:
+    """Render the email HTML by replacing placeholders in the React Email template."""
+    theme_display = theme.replace("_", " ").title() if theme else "Default"
+    details_html = _build_details_rows(
+        city, theme_display, custom_title, output_format, landmarks
+    )
+
+    if _template_html is not None:
+        return (
+            _template_html
+            .replace("{{city}}", html.escape(city))
+            .replace("{{theme}}", html.escape(theme_display))
+            .replace("{{details_rows}}", details_html)
+        )
+
+    # Minimal fallback if template file is missing
+    safe_city = html.escape(city)
     return f"""\
-<!DOCTYPE html>
-<html lang="en">
-<head><meta charset="UTF-8"></head>
-<body style="margin:0;padding:0;background-color:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f5;padding:40px 0;">
-    <tr><td align="center">
-      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background-color:#ffffff;border-radius:8px;overflow:hidden;">
-        <!-- Header -->
-        <tr><td style="padding:32px 32px 24px;border-bottom:1px solid #e4e4e7;">
-          <h1 style="margin:0;font-size:22px;font-weight:600;color:#18181b;letter-spacing:-0.02em;">Cartographix</h1>
-        </td></tr>
-        <!-- Body -->
-        <tr><td style="padding:32px;">
-          <h2 style="margin:0 0 16px;font-size:18px;font-weight:600;color:#18181b;">Your poster is ready</h2>
-          <p style="margin:0 0 12px;font-size:15px;line-height:1.6;color:#3f3f46;">
-            Here's your custom map poster of <strong>{city}</strong> in the <strong>{theme_display}</strong> theme.
-          </p>
-          <p style="margin:0;font-size:15px;line-height:1.6;color:#3f3f46;">
-            Your poster is attached as a high-resolution PNG.
-          </p>
-        </td></tr>
-        <!-- Footer -->
-        <tr><td style="padding:24px 32px;background-color:#fafafa;border-top:1px solid #e4e4e7;">
-          <p style="margin:0 0 8px;font-size:13px;line-height:1.5;color:#71717a;">
-            No tracking, no marketing &mdash; just your poster.
-          </p>
-          <p style="margin:0;font-size:13px;line-height:1.5;color:#a1a1aa;">
-            <a href="https://github.com/radman-x/cartographix" style="color:#71717a;text-decoration:underline;">Cartographix</a> is free and open source.
-          </p>
-        </td></tr>
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>"""
+<html><body style="font-family:sans-serif;padding:40px;background:#f0f0f0;">
+<div style="max-width:500px;margin:0 auto;background:#fff;border-radius:8px;padding:32px;">
+<h1 style="color:#18181b;">Your poster is ready</h1>
+<p>Your map poster of <strong>{safe_city}</strong> ({html.escape(theme_display)} theme) is attached.</p>
+<hr/>
+<p style="font-size:12px;color:#aaa;">Made by <a href="https://radman.dev">Radman</a></p>
+</div></body></html>"""
 
 
 def send_poster_email(
-    to_email: str, city: str, png_path: str, theme: str = "", distance: int = 0
+    to_email: str,
+    city: str,
+    png_path: str,
+    theme: str = "",
+    distance: int = 0,
+    custom_title: str = "",
+    output_format: str = "",
+    landmarks: Optional[List[dict]] = None,
 ) -> bool:
     """Send the generated poster PNG as an email attachment via Resend."""
     api_key = os.environ.get("RESEND_API_KEY")
@@ -71,10 +181,19 @@ def send_poster_email(
 
         resend.Emails.send(
             {
-                "from": "Cartographix <noreply@cartographix.app>",
+                "from": "Cartographix <Cartographix@mail.radman.dev>",
+                "reply_to": "rad@radman.dev",
                 "to": [to_email],
-                "subject": f"Your Cartographix poster of {city} is ready",
-                "html": _build_email_html(city, theme),
+                "subject": "Your Cartographix map poster is ready",
+                "html": _build_email_html(
+                    city, theme, custom_title, output_format, landmarks
+                ),
+                "text": _build_email_plain(
+                    city, theme, custom_title, output_format, landmarks
+                ),
+                "headers": {
+                    "X-Entity-Ref-ID": filename,
+                },
                 "attachments": [
                     {
                         "filename": filename,

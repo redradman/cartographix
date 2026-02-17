@@ -16,7 +16,7 @@ export default function BottomBanner() {
           <span className="mx-2">&middot;</span>
           Made by{' '}
           <a
-            href="https://radman.dev"
+            href="https://radman.dev?utm_source=cartographix"
             target="_blank"
             rel="noopener noreferrer"
             className="text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#0A0A0A] dark:hover:text-white transition-colors underline underline-offset-2"

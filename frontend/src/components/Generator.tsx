@@ -10,8 +10,12 @@ import FormatSelector from './FormatSelector';
 import LandmarkInput from './LandmarkInput';
 import StatusDisplay from './StatusDisplay';
 import Toast from './Toast';
-import PosterMockup from './PosterMockup';
 import type { Theme, Landmark } from '@/lib/api';
+
+const PREVIEW_CITIES = [
+  'barcelona', 'beijing', 'berlin', 'dubai', 'london',
+  'madrid', 'new_york', 'paris', 'singapore', 'sydney', 'tokyo',
+];
 import { fetchThemes, generatePoster, fetchStatus } from '@/lib/api';
 
 type AppState = 'default' | 'generating' | 'completed' | 'error' | 'rate_limited';
@@ -54,6 +58,7 @@ export default function Generator() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
   const [themesLoading, setThemesLoading] = useState(true);
+  const [previewCity] = useState(() => PREVIEW_CITIES[Math.floor(Math.random() * PREVIEW_CITIES.length)]);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -264,13 +269,11 @@ export default function Generator() {
                     transition={{ duration: 0.3 }}
                     className="w-72 h-96 rounded-lg overflow-hidden shadow-xl border border-[#E5E7EB] dark:border-[#2A2A2A]"
                   >
-                    {selectedTheme && (
-                      <PosterMockup
-                        colors={selectedTheme.preview_colors}
-                        cityName={city || 'Your City'}
-                        className="w-full h-full"
-                      />
-                    )}
+                    <img
+                      src={`/previews/${previewCity}/${theme}.jpg`}
+                      alt={`${theme} theme preview`}
+                      className="w-full h-full object-cover"
+                    />
                   </motion.div>
                 </AnimatePresence>
               </div>

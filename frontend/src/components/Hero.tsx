@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import PosterMockup from './PosterMockup';
 
 const HERO_POSTERS = [
-  { city: 'Tokyo', theme: 'Midnight', colors: ['#0D1117', '#1A1A2E', '#16213E', '#0F3460'] },
-  { city: 'Paris', theme: 'Classic', colors: ['#F5F5DC', '#2F2F2F', '#8B8B83', '#CD853F'] },
-  { city: 'New York', theme: 'Blueprint', colors: ['#003082', '#4A90D9', '#7EC8E3', '#FFFFFF'] },
-  { city: 'London', theme: 'Monochrome', colors: ['#FFFFFF', '#000000', '#404040', '#808080'] },
-  { city: 'Barcelona', theme: 'Sunset', colors: ['#1A0A2E', '#FF6B35', '#FF9F1C', '#FCE762'] },
+  { city: 'Tokyo', slug: 'tokyo', theme: 'Midnight', themeId: 'midnight' },
+  { city: 'Paris', slug: 'paris', theme: 'Classic', themeId: 'classic' },
+  { city: 'New York', slug: 'new_york', theme: 'Blueprint', themeId: 'blueprint' },
+  { city: 'London', slug: 'london', theme: 'Monochrome', themeId: 'monochrome' },
+  { city: 'Barcelona', slug: 'barcelona', theme: 'Sunset', themeId: 'sunset' },
 ];
 
 export default function Hero() {
@@ -58,10 +57,10 @@ export default function Hero() {
               transition={{ duration: 0.6 }}
               className="absolute inset-0"
             >
-              <PosterMockup
-                colors={current.colors}
-                cityName={current.city}
-                className="w-full h-full"
+              <img
+                src={`/previews/${current.slug}/${current.themeId}.jpg`}
+                alt={`${current.city} ${current.theme} poster`}
+                className="w-full h-full object-cover"
               />
             </motion.div>
           </AnimatePresence>

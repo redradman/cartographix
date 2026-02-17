@@ -10,6 +10,8 @@ import FormatSelector from './FormatSelector';
 import LandmarkInput from './LandmarkInput';
 import StatusDisplay from './StatusDisplay';
 import Toast from './Toast';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { CircleHelp } from 'lucide-react';
 import type { Theme, Landmark } from '@/lib/api';
 
 const PREVIEW_CITIES = [
@@ -198,9 +200,19 @@ export default function Generator() {
                 <DistanceSlider value={distance} onChange={setDistance} />
 
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-[#0A0A0A] dark:text-[#F9FAFB]">
-                    Landmarks <span className="text-[#9CA3AF] dark:text-[#6B7280] font-normal">(optional, up to 5)</span>
-                  </Label>
+                  <div className="flex items-center gap-1.5">
+                    <Label className="text-sm font-medium text-[#0A0A0A] dark:text-[#F9FAFB]">
+                      Landmarks <span className="text-[#9CA3AF] dark:text-[#6B7280] font-normal">(optional)</span>
+                    </Label>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <CircleHelp className="w-3.5 h-3.5 text-[#9CA3AF] dark:text-[#6B7280] cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-[240px] text-center">
+                        <p>Paste a Google Maps or OpenStreetMap link to pin up to 5 landmarks on your poster.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
                   <LandmarkInput landmarks={landmarks} onChange={setLandmarks} />
                 </div>
 

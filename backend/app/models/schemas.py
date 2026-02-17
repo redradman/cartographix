@@ -44,26 +44,12 @@ class StatusResponse(BaseModel):
 
 
 class ShareRequest(BaseModel):
-    gallery_opt_in: bool = Field(default=False)
+    pass
 
 
 class ShareResponse(BaseModel):
     share_id: str
     share_url: str
-
-
-class GalleryItem(BaseModel):
-    share_id: str
-    city: str
-    country: str
-    theme: str
-    poster_url: str
-    created_at: str
-
-
-class GalleryResponse(BaseModel):
-    posters: List[GalleryItem]
-    total: int
 
 
 class ThemeItem(BaseModel):

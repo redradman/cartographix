@@ -72,7 +72,6 @@ function getStageMessage(stage: string | undefined, city: string): string {
 export default function StatusDisplay({ state, city, stage, email, posterUrl, errorMessage, jobId, onRetry, onReset }: StatusDisplayProps) {
   const [shared, setShared] = useState(false);
   const [shareLoading, setShareLoading] = useState(false);
-  const [galleryOptIn, setGalleryOptIn] = useState(true);
 
   const handleDownload = () => {
     if (!posterUrl) return;
@@ -86,7 +85,7 @@ export default function StatusDisplay({ state, city, stage, email, posterUrl, er
     if (!jobId || shareLoading) return;
     setShareLoading(true);
     try {
-      const result = await sharePoster(jobId, galleryOptIn);
+      const result = await sharePoster(jobId);
       const fullUrl = `${window.location.origin}${result.share_url}`;
       await navigator.clipboard.writeText(fullUrl);
       setShared(true);
@@ -163,17 +162,6 @@ export default function StatusDisplay({ state, city, stage, email, posterUrl, er
                   >
                     {shareLoading ? 'Sharing...' : shared ? 'Link copied!' : 'Share poster'}
                   </button>
-                  {!shared && (
-                    <label className="flex items-center gap-2 mt-3 text-sm text-[#6B7280] dark:text-[#9CA3AF] cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={galleryOptIn}
-                        onChange={(e) => setGalleryOptIn(e.target.checked)}
-                        className="rounded border-[#D1D5DB] dark:border-[#4B5563]"
-                      />
-                      Add to community gallery
-                    </label>
-                  )}
                 </div>
               )}
             </motion.div>

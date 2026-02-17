@@ -53,7 +53,16 @@ def _process_job(job_id: str) -> None:
 
         if job.email:
             _update_stage("sending_email")
-            send_poster_email(job.email, job.city, result_path, theme=job.theme, distance=job.distance)
+            send_poster_email(
+                job.email,
+                job.city,
+                result_path,
+                theme=job.theme,
+                distance=job.distance,
+                custom_title=job.custom_title,
+                output_format=job.output_format,
+                landmarks=job.landmarks,
+            )
 
         _update_stage("done")
         job.status = "completed"

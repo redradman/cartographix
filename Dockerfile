@@ -1,4 +1,12 @@
-# Stage 1 - Build frontend
+# Stage 1a - Build email templates
+FROM node:20-alpine AS build-emails
+WORKDIR /app/emails
+COPY emails/package.json emails/package-lock.json* ./
+RUN npm ci
+COPY emails/ .
+RUN npm run build
+
+# Stage 1b - Build frontend
 FROM node:20-alpine AS build-frontend
 WORKDIR /app/frontend
 COPY frontend/package.json frontend/package-lock.json* ./
@@ -32,6 +40,9 @@ COPY backend/ .
 
 # Copy frontend build
 COPY --from=build-frontend /app/frontend/dist /frontend/dist
+
+# Copy pre-rendered email template
+COPY --from=build-emails /app/emails/dist/poster-ready.html /app/emails/poster-ready.html
 
 ENV PYTHONUNBUFFERED=1 \
     ENVIRONMENT=production

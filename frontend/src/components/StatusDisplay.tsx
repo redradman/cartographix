@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { sharePoster } from '@/lib/api';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,7 +19,6 @@ interface StatusDisplayProps {
   email?: string;
   posterUrl?: string | null;
   errorMessage?: string;
-  jobId?: string | null;
   onRetry: () => void;
   onReset: () => void;
 }
@@ -310,31 +308,13 @@ function PosterGallery({ stage, city }: { stage?: string; city: string }) {
   );
 }
 
-export default function StatusDisplay({ state, city, stage, email, posterUrl, errorMessage, jobId, onRetry, onReset }: StatusDisplayProps) {
-  const [shared, setShared] = useState(false);
-  const [shareLoading, setShareLoading] = useState(false);
-
+export default function StatusDisplay({ state, city, stage, email, posterUrl, errorMessage, onRetry, onReset }: StatusDisplayProps) {
   const handleDownload = () => {
     if (!posterUrl) return;
     const link = document.createElement('a');
     link.href = posterUrl;
     link.download = `${city.toLowerCase().replace(/\s+/g, '_')}_poster.png`;
     link.click();
-  };
-
-  const handleShare = async () => {
-    if (!jobId || shareLoading) return;
-    setShareLoading(true);
-    try {
-      const result = await sharePoster(jobId);
-      const fullUrl = `${window.location.origin}${result.share_url}`;
-      await navigator.clipboard.writeText(fullUrl);
-      setShared(true);
-    } catch {
-      // silently fail
-    } finally {
-      setShareLoading(false);
-    }
   };
 
   return (
@@ -389,17 +369,6 @@ export default function StatusDisplay({ state, city, stage, email, posterUrl, er
                 Download poster
               </button>
 
-              {jobId && (
-                <div className="mt-4">
-                  <button
-                    onClick={handleShare}
-                    disabled={shareLoading}
-                    className="w-full py-3 border-2 border-[#0A0A0A] dark:border-white text-[#0A0A0A] dark:text-white rounded-lg font-medium hover:bg-[#0A0A0A] dark:hover:bg-white hover:text-white dark:hover:text-[#0A0A0A] transition-all hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-50"
-                  >
-                    {shareLoading ? 'Sharing...' : shared ? 'Link copied!' : 'Share poster'}
-                  </button>
-                </div>
-              )}
             </motion.div>
           )}
 

@@ -313,8 +313,6 @@ export default function Generator() {
               email={email}
               posterUrl={posterUrl}
               errorMessage={errorMessage}
-              jobId={jobId}
-
               onRetry={handleRetry}
               onReset={handleReset}
             />

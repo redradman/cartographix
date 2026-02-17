@@ -52,7 +52,7 @@ export default function Generator() {
   const [outputFormat, setOutputFormat] = useState('instagram');
   const [landmarks, setLandmarks] = useState<Landmark[]>([]);
   const [customTitle, setCustomTitle] = useState('');
-  const [jobId, setJobId] = useState<string | null>(null);
+  const [, setJobId] = useState<string | null>(null);
   const [appState, setAppState] = useState<AppState>('default');
   const [errorMessage, setErrorMessage] = useState('');
   const [posterUrl, setPosterUrl] = useState<string | null>(null);

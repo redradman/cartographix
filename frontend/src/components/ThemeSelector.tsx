@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 import type { Theme } from '@/lib/api';
 import ThemeCard from './ThemeCard';
 
@@ -8,16 +8,16 @@ interface ThemeSelectorProps {
   onSelect: (id: string) => void;
 }
 
-const container = {
+const container: Variants = {
   hidden: {},
   show: {
     transition: { staggerChildren: 0.03 },
   },
 };
 
-const item = {
+const item: Variants = {
   hidden: { opacity: 0, y: 8 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' } },
+  show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' as const } },
 };
 
 export default function ThemeSelector({ themes, selected, onSelect }: ThemeSelectorProps) {

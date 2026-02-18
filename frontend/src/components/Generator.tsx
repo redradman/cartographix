@@ -11,7 +11,7 @@ import LandmarkInput from './LandmarkInput';
 import StatusDisplay from './StatusDisplay';
 import Toast from './Toast';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { CircleHelp } from 'lucide-react';
+import { CircleHelp, Clock, Mail } from 'lucide-react';
 import type { Theme, Landmark } from '@/lib/api';
 
 const PREVIEW_CITIES = [
@@ -61,7 +61,7 @@ export default function Generator() {
   const [toastVisible, setToastVisible] = useState(false);
   const [themesLoading, setThemesLoading] = useState(true);
   const [previewCity] = useState(() => PREVIEW_CITIES[Math.floor(Math.random() * PREVIEW_CITIES.length)]);
-  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollingRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     fetchThemes()
@@ -72,31 +72,44 @@ export default function Generator() {
 
   useEffect(() => {
     return () => {
-      if (pollingRef.current) clearInterval(pollingRef.current);
+      if (pollingRef.current) clearTimeout(pollingRef.current);
     };
   }, []);
 
   const pollStatus = useCallback((jobId: string) => {
-    pollingRef.current = setInterval(async () => {
+    let interval = 3000; // Start at 3s
+    const MAX_INTERVAL = 15000; // Cap at 15s
+    const BACKOFF_FACTOR = 1.5;
+
+    const poll = async () => {
       try {
         const status = await fetchStatus(jobId);
         if (status.stage) setStage(status.stage);
         if (status.status === 'completed') {
-          if (pollingRef.current) clearInterval(pollingRef.current);
+          pollingRef.current = null;
           if (status.poster_url) setPosterUrl(status.poster_url);
           setAppState('completed');
           setToastVisible(true);
+          return;
         } else if (status.status === 'failed') {
-          if (pollingRef.current) clearInterval(pollingRef.current);
+          pollingRef.current = null;
           setErrorMessage(status.error_message || 'Generation failed. Try again with a different city or smaller distance.');
           setAppState('error');
+          return;
         }
       } catch {
-        if (pollingRef.current) clearInterval(pollingRef.current);
+        pollingRef.current = null;
         setErrorMessage('Lost connection to server');
         setAppState('error');
+        return;
       }
-    }, 5000);
+      // Schedule next poll with backoff
+      interval = Math.min(interval * BACKOFF_FACTOR, MAX_INTERVAL);
+      pollingRef.current = setTimeout(poll, interval);
+    };
+
+    // First poll after initial interval
+    pollingRef.current = setTimeout(poll, interval);
   }, []);
 
   const handleGenerate = async () => {
@@ -205,6 +218,36 @@ export default function Generator() {
                 </div>
 
                 <DistanceSlider value={distance} onChange={setDistance} />
+
+                <AnimatePresence>
+                  {distance > 10000 && !email.trim() && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.25 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="flex items-start gap-3 p-4 rounded-lg border border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-950/30">
+                        <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+                        <div className="text-sm text-amber-800 dark:text-amber-300">
+                          <p className="font-medium">Larger radius = longer wait</p>
+                          <p className="mt-1 text-amber-700 dark:text-amber-400/80">
+                            Add your email below so we can deliver your poster — you won't need to keep the page open.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => document.getElementById('email')?.focus()}
+                            className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-amber-800 dark:text-amber-300 hover:text-amber-900 dark:hover:text-amber-200 underline underline-offset-2 decoration-amber-400/50 transition-colors"
+                          >
+                            <Mail className="w-3.5 h-3.5" />
+                            Jump to email field
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
                 <div className="space-y-2">
                   <div className="flex items-center gap-1.5">

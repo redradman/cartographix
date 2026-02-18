@@ -105,7 +105,10 @@ def _run_with_semaphore(job_id: str, semaphore: asyncio.Semaphore, loop: asyncio
 )
 async def generate(req: GenerateRequest, request: Request) -> GenerateResponse:
     # Rate limit by IP
-    client_ip = request.client.host if request.client else "unknown"
+    client_ip = (
+        request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+        or (request.client.host if request.client else "unknown")
+    )
     if not ip_rate_limiter.is_allowed(client_ip):
         raise HTTPException(
             status_code=429,

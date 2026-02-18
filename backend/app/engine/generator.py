@@ -4,6 +4,8 @@ import uuid
 from pathlib import Path
 from typing import Callable, List, Optional
 
+from cachetools import LRUCache
+
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -59,7 +61,7 @@ def _call_with_overpass_fallback(fn, *args, **kwargs):
 
 
 # Module-level geocoding cache: query string -> (lat, lng)
-_geocode_cache: dict[str, tuple[float, float]] = {}
+_geocode_cache: LRUCache = LRUCache(maxsize=1024)
 
 
 def _load_font(name: str) -> Optional[fm.FontProperties]:

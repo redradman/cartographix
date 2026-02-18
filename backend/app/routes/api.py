@@ -1,8 +1,11 @@
+import asyncio
 import logging
+import os
+import threading
 from pathlib import Path
 from typing import List
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse
 
 from app.engine.generator import generate_poster
@@ -18,12 +21,15 @@ from app.models.schemas import (
 from app.models.themes import THEMES
 from app.services.email import send_poster_email
 from app.services.job_store import job_store
-from app.services.rate_limiter import rate_limiter
+from app.services.rate_limiter import rate_limiter, ip_rate_limiter
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api")
 
+MAX_CONCURRENT_JOBS = int(os.environ.get("MAX_CONCURRENT_JOBS", "2"))
+GENERATION_TIMEOUT = int(os.environ.get("GENERATION_TIMEOUT", "300"))
+_generation_semaphore = asyncio.Semaphore(MAX_CONCURRENT_JOBS)
 
 ALLOWED_OUTPUT_FORMATS = ["instagram", "mobile_wallpaper", "hd_wallpaper", "4k_wallpaper", "a4_print"]
 
@@ -74,12 +80,38 @@ def _process_job(job_id: str) -> None:
         logger.error("Job %s failed: %s", job_id, e)
 
 
+def _run_with_semaphore(job_id: str, semaphore: asyncio.Semaphore, loop: asyncio.AbstractEventLoop) -> None:
+    """Acquire semaphore, run job with timeout, release."""
+    future = asyncio.run_coroutine_threadsafe(semaphore.acquire(), loop)
+    future.result()  # block until slot available
+    try:
+        worker = threading.Thread(target=_process_job, args=(job_id,), daemon=True)
+        worker.start()
+        worker.join(timeout=GENERATION_TIMEOUT)
+        if worker.is_alive():
+            job = job_store.get(job_id)
+            if job and job.status == "processing":
+                job.status = "failed"
+                job.error = f"Generation timed out after {GENERATION_TIMEOUT} seconds"
+                logger.error("Job %s timed out after %ds", job_id, GENERATION_TIMEOUT)
+    finally:
+        loop.call_soon_threadsafe(semaphore.release)
+
+
 @router.post(
     "/generate",
     response_model=GenerateResponse,
     responses={422: {"model": ErrorResponse}, 429: {"model": ErrorResponse}},
 )
-async def generate(req: GenerateRequest, background_tasks: BackgroundTasks) -> GenerateResponse:
+async def generate(req: GenerateRequest, request: Request) -> GenerateResponse:
+    # Rate limit by IP
+    client_ip = request.client.host if request.client else "unknown"
+    if not ip_rate_limiter.is_allowed(client_ip):
+        raise HTTPException(
+            status_code=429,
+            detail={"error": "rate_limited", "detail": "Too many requests. Please try again later."},
+        )
+
     # Validate theme
     if req.theme not in THEMES:
         raise HTTPException(
@@ -121,7 +153,13 @@ async def generate(req: GenerateRequest, background_tasks: BackgroundTasks) -> G
         landmarks=landmarks_dicts,
     )
 
-    background_tasks.add_task(_process_job, job.job_id)
+    loop = asyncio.get_event_loop()
+    thread = threading.Thread(
+        target=_run_with_semaphore,
+        args=(job.job_id, _generation_semaphore, loop),
+        daemon=True,
+    )
+    thread.start()
 
     estimated = max(10, req.distance // 200)
 

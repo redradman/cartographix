@@ -139,6 +139,13 @@ export default function Generator() {
     setErrorMessage('');
   };
 
+  const [previewLoaded, setPreviewLoaded] = useState(false);
+
+  // Reset loaded state when theme changes so shimmer shows again
+  useEffect(() => {
+    setPreviewLoaded(false);
+  }, [theme]);
+
   const canSubmit = city.trim().length > 0 && !isSubmitting;
 
   return (
@@ -288,12 +295,19 @@ export default function Generator() {
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
                     transition={{ duration: 0.3 }}
-                    className="w-72 h-96 rounded-lg overflow-hidden shadow-xl border border-[#E5E7EB] dark:border-[#2A2A2A]"
+                    className="relative w-72 h-96 rounded-lg overflow-hidden shadow-xl border border-[#E5E7EB] dark:border-[#2A2A2A] bg-[#F3F4F6] dark:bg-[#1A1A1A]"
                   >
+                    {/* Skeleton shimmer */}
+                    {!previewLoaded && (
+                      <div className="absolute inset-0 overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 dark:via-white/5 to-transparent animate-[shimmer_1.5s_infinite] -translate-x-full" />
+                      </div>
+                    )}
                     <img
                       src={`/previews/${previewCity}/${theme}.jpg`}
                       alt={`${theme} theme preview`}
-                      className="w-full h-full object-cover"
+                      className={`w-full h-full object-cover transition-opacity duration-300 ${previewLoaded ? 'opacity-100' : 'opacity-0'}`}
+                      onLoad={() => setPreviewLoaded(true)}
                     />
                   </motion.div>
                 </AnimatePresence>

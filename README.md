@@ -1,16 +1,28 @@
 <p align="center">
   <h1 align="center">Cartographix</h1>
   <p align="center">
-    Transform any city into a stunning map poster — in seconds.
+    Turn any city into art.
   </p>
   <p align="center">
-    <a href="#features">Features</a> · <a href="#how-it-works">How It Works</a> · <a href="#themes">Themes</a> · <a href="#getting-started">Getting Started</a>
+    Generate beautiful, minimalist street-map posters of any city in the world.<br/>
+    Choose a theme, pick a radius, and get it delivered to your inbox.
+  </p>
+  <p align="center">
+    <a href="https://cartographix.radman.dev">Live App</a> · <a href="#features">Features</a> · <a href="#how-it-works">How It Works</a> · <a href="#themes">Themes</a> · <a href="#getting-started">Getting Started</a>
   </p>
 </p>
 
 ---
 
-**Cartographix** is an open-source web app that generates beautiful, print-ready map posters from real OpenStreetMap data. Enter a city, choose a style, and get a high-resolution poster you can download or have emailed to you — no design skills needed.
+<p align="center">
+  <img src="docs/screenshots/main-page.png" alt="Cartographix hero — scrolling poster gallery with 17 themes across world cities" width="100%" />
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/create-your-poster.png" alt="Cartographix generator — pick a city, theme, and distance to create your poster" width="100%" />
+</p>
+
+---
 
 Built with React, FastAPI, and OSMnx. Based on [MapToPoster](https://github.com/originalankur/maptoposter) by Ankur Kumar.
 
@@ -18,11 +30,12 @@ Built with React, FastAPI, and OSMnx. Based on [MapToPoster](https://github.com/
 
 - **17 hand-crafted themes** — from Midnight and Neon to Watercolor and Blueprint, each with a distinct color palette
 - **Real map data** — streets, rivers, parks, and coastlines pulled from OpenStreetMap via OSMnx
-- **Multiple output formats** — Instagram story, square, landscape, A4 print, and more
+- **Live theme preview** — see a real poster update instantly as you browse themes
+- **Multiple output formats** — Instagram square, mobile wallpaper, HD wallpaper, 4K, and A4 print
 - **City autocomplete** — powered by Nominatim with instant suggestions as you type
 - **Custom poster titles** — personalize with your own text or let it default to the city name
 - **Landmark pins** — paste Google Maps or OpenStreetMap links to pin up to 5 landmarks
-- **Adjustable radius** — control how much of the city to capture with a distance slider
+- **Adjustable radius** — control how much of the city to capture (1–35 km)
 - **Email delivery** — optionally receive your poster via email so you don't have to wait
 - **Poster gallery** — browse a library of pre-rendered posters while your map generates
 - **Dark mode** — full light/dark theme support across the entire UI

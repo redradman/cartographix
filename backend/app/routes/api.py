@@ -145,16 +145,22 @@ async def generate(req: GenerateRequest, request: Request) -> GenerateResponse:
 
     landmarks_dicts = [lm.model_dump() for lm in req.landmarks]
 
-    job = job_store.create(
-        city=req.city,
-        country=req.country,
-        theme=req.theme,
-        distance=req.distance,
-        email=req.email,
-        output_format=req.output_format,
-        custom_title=req.custom_title,
-        landmarks=landmarks_dicts,
-    )
+    try:
+        job = job_store.create(
+            city=req.city,
+            country=req.country,
+            theme=req.theme,
+            distance=req.distance,
+            email=req.email,
+            output_format=req.output_format,
+            custom_title=req.custom_title,
+            landmarks=landmarks_dicts,
+        )
+    except RuntimeError:
+        raise HTTPException(
+            status_code=503,
+            detail={"error": "at_capacity", "detail": "Server is at capacity. Please try again later."},
+        )
 
     loop = asyncio.get_event_loop()
     thread = threading.Thread(

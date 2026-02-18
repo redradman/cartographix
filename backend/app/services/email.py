@@ -57,6 +57,7 @@ def _build_details_rows(
     theme_display: str,
     custom_title: str = "",
     output_format: str = "",
+    distance: int = 0,
     landmarks: Optional[List[dict]] = None,
 ) -> str:
     """Build the HTML for all detail rows, only including non-empty fields."""
@@ -67,9 +68,10 @@ def _build_details_rows(
     if custom_title:
         rows.append(_detail_row("Title", custom_title))
 
-    if output_format and output_format != "instagram":
-        format_label = _FORMAT_LABELS.get(output_format, output_format.replace("_", " ").title())
-        rows.append(_detail_row("Format", format_label))
+    rows.append(_detail_row("Distance", f"{distance / 1000:.0f} km" if distance else "10 km"))
+
+    format_label = _FORMAT_LABELS.get(output_format or "instagram", output_format.replace("_", " ").title() if output_format else "Instagram (1080×1080)")
+    rows.append(_detail_row("Format", format_label))
 
     if landmarks:
         names = [lm.get("name", "") for lm in landmarks if lm.get("name")]
@@ -84,6 +86,7 @@ def _build_email_plain(
     theme: str,
     custom_title: str = "",
     output_format: str = "",
+    distance: int = 0,
     landmarks: Optional[List[dict]] = None,
 ) -> str:
     """Build a plain-text version of the email for multipart/alternative."""
@@ -99,9 +102,9 @@ def _build_email_plain(
     ]
     if custom_title:
         lines.append(f"Title: {custom_title}")
-    if output_format and output_format != "instagram":
-        format_label = _FORMAT_LABELS.get(output_format, output_format.replace("_", " ").title())
-        lines.append(f"Format: {format_label}")
+    lines.append(f"Distance: {distance / 1000:.0f} km" if distance else "Distance: 10 km")
+    format_label = _FORMAT_LABELS.get(output_format or "instagram", output_format.replace("_", " ").title() if output_format else "Instagram (1080×1080)")
+    lines.append(f"Format: {format_label}")
     if landmarks:
         names = [lm.get("name", "") for lm in landmarks if lm.get("name")]
         if names:
@@ -122,12 +125,13 @@ def _build_email_html(
     theme: str,
     custom_title: str = "",
     output_format: str = "",
+    distance: int = 0,
     landmarks: Optional[List[dict]] = None,
 ) -> str:
     """Render the email HTML by replacing placeholders in the React Email template."""
     theme_display = theme.replace("_", " ").title() if theme else "Default"
     details_html = _build_details_rows(
-        city, theme_display, custom_title, output_format, landmarks
+        city, theme_display, custom_title, output_format, distance, landmarks
     )
 
     if _template_html is not None:
@@ -181,15 +185,15 @@ def send_poster_email(
 
         resend.Emails.send(
             {
-                "from": "Cartographix <Cartographix@mail.radman.dev>",
+                "from": "Cartographix By Radman <Cartographix@mail.radman.dev>",
                 "reply_to": "rad@radman.dev",
                 "to": [to_email],
                 "subject": "Your Cartographix map poster is ready",
                 "html": _build_email_html(
-                    city, theme, custom_title, output_format, landmarks
+                    city, theme, custom_title, output_format, distance, landmarks
                 ),
                 "text": _build_email_plain(
-                    city, theme, custom_title, output_format, landmarks
+                    city, theme, custom_title, output_format, distance, landmarks
                 ),
                 "headers": {
                     "X-Entity-Ref-ID": filename,

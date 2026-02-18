@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api")
 
-MAX_CONCURRENT_JOBS = int(os.environ.get("MAX_CONCURRENT_JOBS", "2"))
+MAX_CONCURRENT_JOBS = int(os.environ.get("MAX_CONCURRENT_JOBS", "3"))
 GENERATION_TIMEOUT = int(os.environ.get("GENERATION_TIMEOUT", "300"))
 _generation_semaphore = asyncio.Semaphore(MAX_CONCURRENT_JOBS)
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -152,6 +152,51 @@ function Checkmark() {
   );
 }
 
+function PosterCard({ poster, onSelect }: { poster: PosterPreview; onSelect: (p: PosterPreview) => void }) {
+  const [loaded, setLoaded] = useState(false);
+  const onLoad = useCallback(() => setLoaded(true), []);
+
+  return (
+    <Card
+      className="p-0 gap-0 overflow-hidden cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98]"
+      onClick={() => onSelect(poster)}
+    >
+      <div className="relative aspect-[3/4] bg-[#F3F4F6] dark:bg-[#1A1A1A]">
+        {/* Skeleton shimmer */}
+        {!loaded && (
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 dark:via-white/5 to-transparent animate-[shimmer_1.5s_infinite] -translate-x-full" />
+          </div>
+        )}
+        <img
+          src={poster.src}
+          alt={`${formatCityName(poster.city)} — ${formatThemeName(poster.theme)}`}
+          className={`w-full h-full object-cover transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+          loading="lazy"
+          onLoad={onLoad}
+        />
+      </div>
+      <div className="px-3 py-2">
+        {!loaded ? (
+          <div className="space-y-1.5 py-0.5">
+            <div className="h-3 w-20 bg-[#E5E7EB] dark:bg-[#2A2A2A] rounded animate-pulse" />
+            <div className="h-2.5 w-14 bg-[#F3F4F6] dark:bg-[#1A1A1A] rounded animate-pulse" />
+          </div>
+        ) : (
+          <>
+            <p className="text-xs font-medium text-[#374151] dark:text-[#D1D5DB] truncate">
+              {formatCityName(poster.city)}
+            </p>
+            <p className="text-[10px] text-[#9CA3AF] dark:text-[#6B7280]">
+              {formatThemeName(poster.theme)}
+            </p>
+          </>
+        )}
+      </div>
+    </Card>
+  );
+}
+
 function PosterGallery({ stage, city }: { stage?: string; city: string }) {
   const [page, setPage] = useState(0);
   const [selectedPoster, setSelectedPoster] = useState<PosterPreview | null>(null);
@@ -242,26 +287,11 @@ function PosterGallery({ stage, city }: { stage?: string; city: string }) {
               className="grid grid-cols-2 sm:grid-cols-3 gap-3"
             >
               {currentItems.map((poster) => (
-                <Card
+                <PosterCard
                   key={`${poster.city}-${poster.theme}`}
-                  className="p-0 gap-0 overflow-hidden cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98]"
-                  onClick={() => setSelectedPoster(poster)}
-                >
-                  <img
-                    src={poster.src}
-                    alt={`${formatCityName(poster.city)} — ${formatThemeName(poster.theme)}`}
-                    className="w-full aspect-[3/4] object-cover"
-                    loading="lazy"
-                  />
-                  <div className="px-3 py-2">
-                    <p className="text-xs font-medium text-[#374151] dark:text-[#D1D5DB] truncate">
-                      {formatCityName(poster.city)}
-                    </p>
-                    <p className="text-[10px] text-[#9CA3AF] dark:text-[#6B7280]">
-                      {formatThemeName(poster.theme)}
-                    </p>
-                  </div>
-                </Card>
+                  poster={poster}
+                  onSelect={setSelectedPoster}
+                />
               ))}
             </motion.div>
           </AnimatePresence>

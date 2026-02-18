@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+import re
 import threading
 from pathlib import Path
 from typing import List
@@ -32,6 +33,11 @@ GENERATION_TIMEOUT = int(os.environ.get("GENERATION_TIMEOUT", "300"))
 _generation_semaphore = asyncio.Semaphore(MAX_CONCURRENT_JOBS)
 
 ALLOWED_OUTPUT_FORMATS = ["instagram", "mobile_wallpaper", "hd_wallpaper", "4k_wallpaper", "a4_print"]
+
+def _safe_filename(city: str, theme: str) -> str:
+    """Sanitize user input for use in Content-Disposition filename."""
+    safe_city = re.sub(r"[^a-zA-Z0-9_-]", "_", city.lower().strip())[:80]
+    return f"{safe_city}_{theme}_poster.png"
 
 
 def _process_job(job_id: str) -> None:
@@ -220,7 +226,7 @@ async def get_poster(job_id: str) -> FileResponse:
     return FileResponse(
         path=str(file_path),
         media_type="image/png",
-        filename=f"{job.city.lower().replace(' ', '_')}_{job.theme}_poster.png",
+        filename=_safe_filename(job.city, job.theme),
     )
 
 

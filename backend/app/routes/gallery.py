@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
@@ -11,6 +12,12 @@ from app.models.schemas import (
 from app.services.job_store import job_store
 
 router = APIRouter(prefix="/api")
+
+
+def _safe_filename(city: str, theme: str) -> str:
+    """Sanitize user input for use in Content-Disposition filename."""
+    safe_city = re.sub(r"[^a-zA-Z0-9_-]", "_", city.lower().strip())[:80]
+    return f"{safe_city}_{theme}_poster.png"
 
 
 @router.post("/poster/{job_id}/share", response_model=ShareResponse)
@@ -48,5 +55,5 @@ async def get_shared_poster(share_id: str) -> FileResponse:
     return FileResponse(
         path=str(file_path),
         media_type="image/png",
-        filename=f"{job.city.lower().replace(' ', '_')}_{job.theme}_poster.png",
+        filename=_safe_filename(job.city, job.theme),
     )

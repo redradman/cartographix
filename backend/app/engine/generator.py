@@ -4,7 +4,7 @@ import uuid
 from pathlib import Path
 from typing import Callable, List, Optional
 
-from cachetools import LRUCache
+from collections import OrderedDict
 
 import matplotlib
 matplotlib.use("Agg")
@@ -60,8 +60,9 @@ def _call_with_overpass_fallback(fn, *args, **kwargs):
     raise last_error  # type: ignore[misc]
 
 
-# Module-level geocoding cache: query string -> (lat, lng)
-_geocode_cache: LRUCache = LRUCache(maxsize=1024)
+# Module-level geocoding cache: query string -> (lat, lng), LRU via OrderedDict
+_GEOCODE_CACHE_MAX = 1024
+_geocode_cache: OrderedDict[str, tuple[float, float]] = OrderedDict()
 
 
 def _load_font(name: str) -> Optional[fm.FontProperties]:
@@ -229,6 +230,7 @@ def generate_poster(
     _set_stage("geocoding")
     t0 = time.monotonic()
     if query in _geocode_cache:
+        _geocode_cache.move_to_end(query)
         lat, lng = _geocode_cache[query]
         logger.info("Geocode cache hit for '%s' → (%f, %f)", query, lat, lng)
     else:
@@ -239,6 +241,8 @@ def generate_poster(
             raise ValueError("City not found — check the spelling or try adding a country")
         lat, lng = point
         _geocode_cache[query] = (lat, lng)
+        if len(_geocode_cache) > _GEOCODE_CACHE_MAX:
+            _geocode_cache.popitem(last=False)
         logger.info("Geocoded %s to (%f, %f)", query, lat, lng)
     logger.info("Geocoding took %.2fs", time.monotonic() - t0)
 

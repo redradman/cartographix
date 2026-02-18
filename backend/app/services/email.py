@@ -181,7 +181,7 @@ def send_poster_email(
 
         resend.Emails.send(
             {
-                "from": "Cartographix <Cartographix@mail.radman.dev>",
+                "from": "Cartographix By Radman <Cartographix@mail.radman.dev>",
                 "reply_to": "rad@radman.dev",
                 "to": [to_email],
                 "subject": "Your Cartographix map poster is ready",

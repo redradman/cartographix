@@ -61,7 +61,7 @@ export default function Generator() {
   const [toastVisible, setToastVisible] = useState(false);
   const [themesLoading, setThemesLoading] = useState(true);
   const [previewCity] = useState(() => PREVIEW_CITIES[Math.floor(Math.random() * PREVIEW_CITIES.length)]);
-  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollingRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     fetchThemes()
@@ -72,31 +72,44 @@ export default function Generator() {
 
   useEffect(() => {
     return () => {
-      if (pollingRef.current) clearInterval(pollingRef.current);
+      if (pollingRef.current) clearTimeout(pollingRef.current);
     };
   }, []);
 
   const pollStatus = useCallback((jobId: string) => {
-    pollingRef.current = setInterval(async () => {
+    let interval = 3000; // Start at 3s
+    const MAX_INTERVAL = 15000; // Cap at 15s
+    const BACKOFF_FACTOR = 1.5;
+
+    const poll = async () => {
       try {
         const status = await fetchStatus(jobId);
         if (status.stage) setStage(status.stage);
         if (status.status === 'completed') {
-          if (pollingRef.current) clearInterval(pollingRef.current);
+          pollingRef.current = null;
           if (status.poster_url) setPosterUrl(status.poster_url);
           setAppState('completed');
           setToastVisible(true);
+          return;
         } else if (status.status === 'failed') {
-          if (pollingRef.current) clearInterval(pollingRef.current);
+          pollingRef.current = null;
           setErrorMessage(status.error_message || 'Generation failed. Try again with a different city or smaller distance.');
           setAppState('error');
+          return;
         }
       } catch {
-        if (pollingRef.current) clearInterval(pollingRef.current);
+        pollingRef.current = null;
         setErrorMessage('Lost connection to server');
         setAppState('error');
+        return;
       }
-    }, 5000);
+      // Schedule next poll with backoff
+      interval = Math.min(interval * BACKOFF_FACTOR, MAX_INTERVAL);
+      pollingRef.current = setTimeout(poll, interval);
+    };
+
+    // First poll after initial interval
+    pollingRef.current = setTimeout(poll, interval);
   }, []);
 
   const handleGenerate = async () => {

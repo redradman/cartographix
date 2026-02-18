@@ -40,6 +40,18 @@ export default function Navbar({ isDark, onToggleDark }: NavbarProps) {
               />
             </svg>
           </a>
+          <a
+            href="https://radman.dev?utm_source=cartographix"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-sm text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#0A0A0A] dark:hover:text-white transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" strokeWidth={1.8} />
+              <path strokeWidth={1.8} d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
+            </svg>
+            radman.dev
+          </a>
         </div>
       </div>
     </nav>

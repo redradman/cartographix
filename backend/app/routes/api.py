@@ -8,7 +8,7 @@ from typing import List
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse
 
-from app.engine.generator import generate_poster
+from app.engine.generator import generate_poster, OUTPUT_DIR
 from app.models.schemas import (
     ErrorResponse,
     GenerateRequest,
@@ -207,6 +207,8 @@ async def get_poster(job_id: str) -> FileResponse:
     if job.status != "completed" or not job.result_path:
         raise HTTPException(status_code=404, detail="Poster not ready")
     file_path = Path(job.result_path)
+    if not file_path.resolve().is_relative_to(OUTPUT_DIR):
+        raise HTTPException(status_code=403, detail="Access denied")
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Poster file not found")
     return FileResponse(

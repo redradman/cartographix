@@ -3,6 +3,7 @@ from pathlib import Path
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 
+from app.engine.generator import OUTPUT_DIR
 from app.models.schemas import (
     ShareRequest,
     ShareResponse,
@@ -39,6 +40,8 @@ async def get_shared_poster(share_id: str) -> FileResponse:
         raise HTTPException(status_code=404, detail="Shared poster not found")
 
     file_path = Path(job.result_path)
+    if not file_path.resolve().is_relative_to(OUTPUT_DIR):
+        raise HTTPException(status_code=403, detail="Access denied")
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Poster file not found")
 

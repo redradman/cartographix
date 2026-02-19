@@ -4,7 +4,7 @@ from typing import List
 import httpx
 from fastapi import APIRouter, HTTPException, Query, Request
 
-from app.services.rate_limiter import ip_rate_limiter
+from app.services.rate_limiter import geocode_rate_limiter
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/api")
@@ -31,7 +31,7 @@ async def geocode(request: Request, q: str = Query(..., min_length=2)) -> List[G
         request.headers.get("x-forwarded-for", "").split(",")[0].strip()
         or (request.client.host if request.client else "unknown")
     )
-    if not ip_rate_limiter.is_allowed(client_ip):
+    if not geocode_rate_limiter.is_allowed(client_ip):
         raise HTTPException(status_code=429, detail="Too many requests. Please try again later.")
 
     # Rate limit: max 1 request/second to Nominatim

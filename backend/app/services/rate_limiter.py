@@ -78,3 +78,4 @@ class IPRateLimiter:
 
 
 ip_rate_limiter = IPRateLimiter(max_requests=10)
+geocode_rate_limiter = IPRateLimiter(max_requests=60, window_seconds=3600)

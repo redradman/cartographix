@@ -57,6 +57,7 @@ export default function Generator() {
   const [errorMessage, setErrorMessage] = useState('');
   const [posterUrl, setPosterUrl] = useState<string | null>(null);
   const [stage, setStage] = useState<string | undefined>(undefined);
+  const [estimatedSeconds, setEstimatedSeconds] = useState<number>(60);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
   const [themesLoading, setThemesLoading] = useState(true);
@@ -127,6 +128,7 @@ export default function Generator() {
     try {
       const result = await generatePoster({ city, country, theme, distance, email, output_format: outputFormat, custom_title: customTitle, landmarks });
       setJobId(result.job_id);
+      setEstimatedSeconds(result.estimated_seconds);
       pollCountRef.current = 0;
       setAppState('generating');
       pollStatus(result.job_id);
@@ -384,6 +386,7 @@ export default function Generator() {
               email={email}
               posterUrl={posterUrl}
               errorMessage={errorMessage}
+              estimatedSeconds={estimatedSeconds}
               onRetry={handleRetry}
               onReset={handleReset}
             />

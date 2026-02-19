@@ -19,6 +19,7 @@ interface StatusDisplayProps {
   email?: string;
   posterUrl?: string | null;
   errorMessage?: string;
+  estimatedSeconds?: number;
   onRetry: () => void;
   onReset: () => void;
 }
@@ -121,6 +122,14 @@ function getStageMessage(stage: string | undefined, city: string): string {
   }
 }
 
+function getWaitMessage(seconds: number): string {
+  if (seconds <= 15) return 'Quick one — back in a flash';
+  if (seconds <= 30) return 'Just a moment — stretching the canvas';
+  if (seconds <= 60) return 'Sit tight — your map is taking shape';
+  if (seconds <= 90) return 'Grab a coffee — this is a big map';
+  return 'This one\'s a beast — maybe grab a snack too';
+}
+
 function Checkmark() {
   return (
     <motion.div
@@ -197,7 +206,7 @@ function PosterCard({ poster, onSelect }: { poster: PosterPreview; onSelect: (p:
   );
 }
 
-function PosterGallery({ stage, city }: { stage?: string; city: string }) {
+function PosterGallery({ stage, city, estimatedSeconds = 60 }: { stage?: string; city: string; estimatedSeconds?: number }) {
   const [page, setPage] = useState(0);
   const [selectedPoster, setSelectedPoster] = useState<PosterPreview | null>(null);
 
@@ -235,7 +244,7 @@ function PosterGallery({ stage, city }: { stage?: string; city: string }) {
         </div>
 
         <p className="text-xs text-[#9CA3AF] dark:text-[#6B7280]">
-          This usually takes about a minute
+          {getWaitMessage(estimatedSeconds)}
         </p>
       </div>
 
@@ -338,7 +347,7 @@ function PosterGallery({ stage, city }: { stage?: string; city: string }) {
   );
 }
 
-export default function StatusDisplay({ state, city, stage, email, posterUrl, errorMessage, onRetry, onReset }: StatusDisplayProps) {
+export default function StatusDisplay({ state, city, stage, email, posterUrl, errorMessage, estimatedSeconds, onRetry, onReset }: StatusDisplayProps) {
   const handleDownload = () => {
     if (!posterUrl) return;
     const link = document.createElement('a');
@@ -357,7 +366,7 @@ export default function StatusDisplay({ state, city, stage, email, posterUrl, er
           exit={{ opacity: 0, y: -20 }}
           transition={{ duration: 0.3 }}
         >
-          <PosterGallery stage={stage} city={city} />
+          <PosterGallery stage={stage} city={city} estimatedSeconds={estimatedSeconds} />
         </motion.div>
       )}
 

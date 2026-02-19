@@ -11,7 +11,7 @@ import LandmarkInput from './LandmarkInput';
 import StatusDisplay from './StatusDisplay';
 import Toast from './Toast';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { CircleHelp, Clock, Mail } from 'lucide-react';
+import { CircleHelp, Clock, Mail, Paintbrush } from 'lucide-react';
 import type { Theme, Landmark } from '@/lib/api';
 
 const PREVIEW_CITIES = [
@@ -340,7 +340,7 @@ export default function Generator() {
               </div>
 
               {/* Preview */}
-              <div className="hidden lg:flex items-start justify-center">
+              <div className="hidden lg:flex flex-col items-center justify-start gap-4">
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={theme}
@@ -364,6 +364,10 @@ export default function Generator() {
                     />
                   </motion.div>
                 </AnimatePresence>
+                <p className="flex items-center gap-1.5 text-xs text-[#9CA3AF] dark:text-[#6B7280]">
+                  <Paintbrush className="w-3 h-3 shrink-0" />
+                  Try different themes to see the preview update
+                </p>
               </div>
             </motion.div>
           ) : (

@@ -45,7 +45,7 @@ class RateLimiter:
         return max(0, self.max_requests - len(self._requests[email]))
 
 
-rate_limiter = RateLimiter()
+rate_limiter = RateLimiter(max_requests=10)
 
 
 class IPRateLimiter:
@@ -77,4 +77,4 @@ class IPRateLimiter:
         return True
 
 
-ip_rate_limiter = IPRateLimiter()
+ip_rate_limiter = IPRateLimiter(max_requests=10)

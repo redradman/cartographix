@@ -44,7 +44,11 @@ COPY --from=build-frontend /app/frontend/dist /frontend/dist
 # Copy pre-rendered email template
 COPY --from=build-emails /app/emails/dist/poster-ready.html /app/emails/poster-ready.html
 
+RUN useradd -r -s /bin/false appuser && mkdir -p /app/output && chown -R appuser:appuser /app
+
 ENV PYTHONUNBUFFERED=1 \
     ENVIRONMENT=production
 
-CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
+USER appuser
+
+CMD exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}

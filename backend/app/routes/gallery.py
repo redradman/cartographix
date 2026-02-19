@@ -1,8 +1,10 @@
+import re
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 
+from app.engine.generator import OUTPUT_DIR
 from app.models.schemas import (
     ShareRequest,
     ShareResponse,
@@ -10,6 +12,12 @@ from app.models.schemas import (
 from app.services.job_store import job_store
 
 router = APIRouter(prefix="/api")
+
+
+def _safe_filename(city: str, theme: str) -> str:
+    """Sanitize user input for use in Content-Disposition filename."""
+    safe_city = re.sub(r"[^a-zA-Z0-9_-]", "_", city.lower().strip())[:80]
+    return f"{safe_city}_{theme}_poster.png"
 
 
 @router.post("/poster/{job_id}/share", response_model=ShareResponse)
@@ -39,11 +47,13 @@ async def get_shared_poster(share_id: str) -> FileResponse:
         raise HTTPException(status_code=404, detail="Shared poster not found")
 
     file_path = Path(job.result_path)
+    if not file_path.resolve().is_relative_to(OUTPUT_DIR):
+        raise HTTPException(status_code=403, detail="Access denied")
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Poster file not found")
 
     return FileResponse(
         path=str(file_path),
         media_type="image/png",
-        filename=f"{job.city.lower().replace(' ', '_')}_{job.theme}_poster.png",
+        filename=_safe_filename(job.city, job.theme),
     )

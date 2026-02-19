@@ -6,6 +6,8 @@ from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
+MAX_JOBS = 500
+
 
 class Job:
     def __init__(
@@ -89,6 +91,8 @@ class JobStore:
         landmarks: Optional[List[dict]] = None,
     ) -> Job:
         self.cleanup()
+        if len(self._jobs) >= MAX_JOBS:
+            raise RuntimeError("Server is at capacity — please try again later")
         job = Job(
             city=city,
             country=country,

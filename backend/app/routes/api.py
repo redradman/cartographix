@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+import re
 import threading
 from pathlib import Path
 from typing import List
@@ -8,7 +9,7 @@ from typing import List
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse
 
-from app.engine.generator import generate_poster
+from app.engine.generator import generate_poster, OUTPUT_DIR
 from app.models.schemas import (
     ErrorResponse,
     GenerateRequest,
@@ -32,6 +33,11 @@ GENERATION_TIMEOUT = int(os.environ.get("GENERATION_TIMEOUT", "300"))
 _generation_semaphore = asyncio.Semaphore(MAX_CONCURRENT_JOBS)
 
 ALLOWED_OUTPUT_FORMATS = ["instagram", "mobile_wallpaper", "hd_wallpaper", "4k_wallpaper", "a4_print"]
+
+def _safe_filename(city: str, theme: str) -> str:
+    """Sanitize user input for use in Content-Disposition filename."""
+    safe_city = re.sub(r"[^a-zA-Z0-9_-]", "_", city.lower().strip())[:80]
+    return f"{safe_city}_{theme}_poster.png"
 
 
 def _process_job(job_id: str) -> None:
@@ -105,7 +111,10 @@ def _run_with_semaphore(job_id: str, semaphore: asyncio.Semaphore, loop: asyncio
 )
 async def generate(req: GenerateRequest, request: Request) -> GenerateResponse:
     # Rate limit by IP
-    client_ip = request.client.host if request.client else "unknown"
+    client_ip = (
+        request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+        or (request.client.host if request.client else "unknown")
+    )
     if not ip_rate_limiter.is_allowed(client_ip):
         raise HTTPException(
             status_code=429,
@@ -142,16 +151,22 @@ async def generate(req: GenerateRequest, request: Request) -> GenerateResponse:
 
     landmarks_dicts = [lm.model_dump() for lm in req.landmarks]
 
-    job = job_store.create(
-        city=req.city,
-        country=req.country,
-        theme=req.theme,
-        distance=req.distance,
-        email=req.email,
-        output_format=req.output_format,
-        custom_title=req.custom_title,
-        landmarks=landmarks_dicts,
-    )
+    try:
+        job = job_store.create(
+            city=req.city,
+            country=req.country,
+            theme=req.theme,
+            distance=req.distance,
+            email=req.email,
+            output_format=req.output_format,
+            custom_title=req.custom_title,
+            landmarks=landmarks_dicts,
+        )
+    except RuntimeError:
+        raise HTTPException(
+            status_code=503,
+            detail={"error": "at_capacity", "detail": "Server is at capacity. Please try again later."},
+        )
 
     loop = asyncio.get_event_loop()
     thread = threading.Thread(
@@ -204,12 +219,14 @@ async def get_poster(job_id: str) -> FileResponse:
     if job.status != "completed" or not job.result_path:
         raise HTTPException(status_code=404, detail="Poster not ready")
     file_path = Path(job.result_path)
+    if not file_path.resolve().is_relative_to(OUTPUT_DIR):
+        raise HTTPException(status_code=403, detail="Access denied")
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Poster file not found")
     return FileResponse(
         path=str(file_path),
         media_type="image/png",
-        filename=f"{job.city.lower().replace(' ', '_')}_{job.theme}_poster.png",
+        filename=_safe_filename(job.city, job.theme),
     )
 
 

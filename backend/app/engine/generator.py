@@ -1,4 +1,5 @@
 import logging
+import re
 import time
 import uuid
 from pathlib import Path
@@ -435,7 +436,8 @@ def generate_poster(
                 fontproperties=font_attr, zorder=11)
 
         # Save to file
-        filename = f"{city.lower().replace(' ', '_')}_{theme}_{uuid.uuid4().hex[:8]}.png"
+        safe_city = re.sub(r"[^a-zA-Z0-9_-]", "_", city.lower().strip())[:80]
+        filename = f"{safe_city}_{theme}_{uuid.uuid4().hex[:8]}.png"
         output_path = OUTPUT_DIR / filename
         fig.savefig(
             str(output_path),

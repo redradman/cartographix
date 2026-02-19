@@ -62,6 +62,8 @@ export default function Generator() {
   const [themesLoading, setThemesLoading] = useState(true);
   const [previewCity] = useState(() => PREVIEW_CITIES[Math.floor(Math.random() * PREVIEW_CITIES.length)]);
   const pollingRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pollCountRef = useRef(0);
+  const MAX_POLL_COUNT = 60;
 
   useEffect(() => {
     fetchThemes()
@@ -82,6 +84,13 @@ export default function Generator() {
     const BACKOFF_FACTOR = 1.5;
 
     const poll = async () => {
+      pollCountRef.current += 1;
+      if (pollCountRef.current > MAX_POLL_COUNT) {
+        pollingRef.current = null;
+        setErrorMessage('Generation timed out. Try again with a smaller area or different city.');
+        setAppState('error');
+        return;
+      }
       try {
         const status = await fetchStatus(jobId);
         if (status.stage) setStage(status.stage);
@@ -118,6 +127,7 @@ export default function Generator() {
     try {
       const result = await generatePoster({ city, country, theme, distance, email, output_format: outputFormat, custom_title: customTitle, landmarks });
       setJobId(result.job_id);
+      pollCountRef.current = 0;
       setAppState('generating');
       pollStatus(result.job_id);
     } catch (err) {

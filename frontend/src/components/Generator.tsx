@@ -94,7 +94,8 @@ export default function Generator() {
       }
       try {
         const status = await fetchStatus(jobId);
-        if (status.stage) setStage(status.stage);
+        if (status.status === 'queued') setStage('queued');
+        else if (status.stage) setStage(status.stage);
         if (status.status === 'completed') {
           pollingRef.current = null;
           if (status.poster_url) setPosterUrl(status.poster_url);

@@ -11,7 +11,7 @@ import LandmarkInput from './LandmarkInput';
 import StatusDisplay from './StatusDisplay';
 import Toast from './Toast';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { CircleHelp, Clock, Mail } from 'lucide-react';
+import { CircleHelp, Clock, Mail, Paintbrush } from 'lucide-react';
 import type { Theme, Landmark } from '@/lib/api';
 
 const PREVIEW_CITIES = [
@@ -57,6 +57,7 @@ export default function Generator() {
   const [errorMessage, setErrorMessage] = useState('');
   const [posterUrl, setPosterUrl] = useState<string | null>(null);
   const [stage, setStage] = useState<string | undefined>(undefined);
+  const [estimatedSeconds, setEstimatedSeconds] = useState<number>(60);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
   const [themesLoading, setThemesLoading] = useState(true);
@@ -127,6 +128,7 @@ export default function Generator() {
     try {
       const result = await generatePoster({ city, country, theme, distance, email, output_format: outputFormat, custom_title: customTitle, landmarks });
       setJobId(result.job_id);
+      setEstimatedSeconds(result.estimated_seconds);
       pollCountRef.current = 0;
       setAppState('generating');
       pollStatus(result.job_id);
@@ -340,7 +342,7 @@ export default function Generator() {
               </div>
 
               {/* Preview */}
-              <div className="hidden lg:flex items-start justify-center">
+              <div className="hidden lg:flex flex-col items-center justify-start gap-4">
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={theme}
@@ -364,6 +366,10 @@ export default function Generator() {
                     />
                   </motion.div>
                 </AnimatePresence>
+                <p className="flex items-center gap-1.5 text-xs text-[#9CA3AF] dark:text-[#6B7280]">
+                  <Paintbrush className="w-3 h-3 shrink-0" />
+                  Try different themes to see the preview update
+                </p>
               </div>
             </motion.div>
           ) : (
@@ -380,6 +386,7 @@ export default function Generator() {
               email={email}
               posterUrl={posterUrl}
               errorMessage={errorMessage}
+              estimatedSeconds={estimatedSeconds}
               onRetry={handleRetry}
               onReset={handleReset}
             />

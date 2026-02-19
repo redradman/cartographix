@@ -7,7 +7,7 @@ import App from './App.tsx'
 posthog.init('phc_R7ZAuPFBNbxkup1BuUERgB7zRw1NC4htBd4Eu9N49MQ', {
   api_host: 'https://radman.dev/ingest',
   ui_host: 'https://us.posthog.com',
-  person_profiles: 'anonymous',
+  person_profiles: 'identified_only',
   autocapture: true,
 })
 

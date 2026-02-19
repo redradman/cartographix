@@ -94,7 +94,8 @@ export default function Generator() {
       }
       try {
         const status = await fetchStatus(jobId);
-        if (status.stage) setStage(status.stage);
+        if (status.status === 'queued') setStage('queued');
+        else if (status.stage) setStage(status.stage);
         if (status.status === 'completed') {
           pollingRef.current = null;
           if (status.poster_url) setPosterUrl(status.poster_url);
@@ -107,9 +108,13 @@ export default function Generator() {
           setAppState('error');
           return;
         }
-      } catch {
+      } catch (err) {
         pollingRef.current = null;
-        setErrorMessage('Lost connection to server');
+        if (err instanceof Error && err.message === 'JOB_EXPIRED') {
+          setErrorMessage('This job has expired — check your email for the poster or try again.');
+        } else {
+          setErrorMessage('Lost connection to server');
+        }
         setAppState('error');
         return;
       }

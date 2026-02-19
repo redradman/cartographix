@@ -102,9 +102,10 @@ const GALLERY_PAGES: PosterPreview[][] = (() => {
 
 const TOTAL_PAGES = GALLERY_PAGES.length;
 
-const STAGE_ORDER = ['geocoding', 'fetching_streets', 'fetching_features', 'rendering', 'sending_email'];
+const STAGE_ORDER = ['queued', 'geocoding', 'fetching_streets', 'fetching_features', 'rendering', 'sending_email'];
 
 function getStageProgress(stage: string | undefined): number {
+  if (stage === 'queued') return 0;
   const idx = STAGE_ORDER.indexOf(stage || '');
   if (idx < 0) return 0.05;
   return Math.min((idx + 1) / STAGE_ORDER.length, 1);
@@ -112,6 +113,7 @@ function getStageProgress(stage: string | undefined): number {
 
 function getStageMessage(stage: string | undefined, city: string): string {
   switch (stage) {
+    case 'queued': return 'Server is busy — your job is queued and will start shortly...';
     case 'geocoding': return `Pinpointing ${city} on the globe...`;
     case 'fetching_streets': return `Tracing the streets of ${city}...`;
     case 'fetching_features': return 'Discovering rivers, parks & coastlines...';

@@ -76,6 +76,7 @@ export async function fetchGeocode(query: string): Promise<GeocodeSuggestion[]> 
 
 export async function fetchStatus(jobId: string): Promise<StatusResponse> {
   const res = await fetch(`/api/status/${jobId}`);
+  if (res.status === 404) throw new Error('JOB_EXPIRED');
   if (!res.ok) throw new Error('Failed to fetch status');
   return res.json();
 }

@@ -1,7 +1,9 @@
 import logging
 import re
+import threading
 import time
 import uuid
+from concurrent.futures import ThreadPoolExecutor, Future
 from pathlib import Path
 from typing import Callable, List, Optional
 
@@ -47,16 +49,23 @@ _OVERPASS_ENDPOINTS = [
     "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
 ]
 
+# Lock to protect ox.settings.overpass_url which is a module-level global.
+# Each call sets the URL then makes an HTTP request — without a lock, concurrent
+# threads would stomp on each other's endpoint setting.
+_overpass_lock = threading.Lock()
+
+
 def _call_with_overpass_fallback(fn, *args, **kwargs):
     """Try fn() across multiple Overpass endpoints, falling back on failure."""
     last_error = None
     for endpoint in _OVERPASS_ENDPOINTS:
-        ox.settings.overpass_url = endpoint
-        try:
-            return fn(*args, **kwargs)
-        except Exception as e:
-            last_error = e
-            logger.warning("Overpass endpoint %s failed: %s — trying next", endpoint, e)
+        with _overpass_lock:
+            ox.settings.overpass_url = endpoint
+            try:
+                return fn(*args, **kwargs)
+            except Exception as e:
+                last_error = e
+                logger.warning("Overpass endpoint %s failed: %s — trying next", endpoint, e)
     # All endpoints failed — raise the last error
     raise last_error  # type: ignore[misc]
 
@@ -263,8 +272,17 @@ def generate_poster(
     )
     _set_stage("fetching_streets")
     t1 = time.monotonic()
-    try:
-        graph = _call_with_overpass_fallback(
+
+    # --- Parallel Overpass fetches ----------------------------------------
+    # Streets, water, and parks are independent API calls. We run them
+    # concurrently to reduce total wall-clock time. The _overpass_lock inside
+    # _call_with_overpass_fallback protects the shared ox.settings.overpass_url
+    # so threads don't stomp each other's endpoint.
+    #
+    # Streets is critical (failure = abort). Water/parks are non-fatal.
+
+    def _fetch_streets():
+        return _call_with_overpass_fallback(
             ox.graph_from_point,
             center_point,
             dist=compensated_dist,
@@ -272,44 +290,56 @@ def generate_poster(
             network_type="all",
             truncate_by_edge=True,
         )
-    except MemoryError:
-        raise ValueError("Area too large — try a smaller distance")
-    except Exception as e:
-        logger.error("Street fetch failed: %s", e)
-        raise ValueError("Could not fetch street data — try a smaller distance or different city")
-    logger.info("Street fetch took %.2fs", time.monotonic() - t1)
 
-    # Fetch water and parks layers
-    _set_stage("fetching_features")
-    t_feat = time.monotonic()
+    def _fetch_water():
+        try:
+            gdf = _call_with_overpass_fallback(
+                ox.features_from_point,
+                center_point,
+                tags={"natural": ["water", "bay", "strait"], "waterway": "riverbank"},
+                dist=compensated_dist,
+            )
+            gdf = gdf[gdf.geometry.type.isin(["Polygon", "MultiPolygon"])]
+            logger.info("Fetched %d water features", len(gdf))
+            return gdf
+        except Exception as e:
+            logger.warning("Water fetch failed (non-fatal): %s", e)
+            return None
 
-    water_gdf = None
-    parks_gdf = None
-    try:
-        water_gdf = _call_with_overpass_fallback(
-            ox.features_from_point,
-            center_point,
-            tags={"natural": ["water", "bay", "strait"], "waterway": "riverbank"},
-            dist=compensated_dist,
-        )
-        water_gdf = water_gdf[water_gdf.geometry.type.isin(["Polygon", "MultiPolygon"])]
-        logger.info("Fetched %d water features", len(water_gdf))
-    except Exception as e:
-        logger.warning("Water fetch failed (non-fatal): %s", e)
+    def _fetch_parks():
+        try:
+            gdf = _call_with_overpass_fallback(
+                ox.features_from_point,
+                center_point,
+                tags={"leisure": "park", "landuse": "grass"},
+                dist=compensated_dist,
+            )
+            gdf = gdf[gdf.geometry.type.isin(["Polygon", "MultiPolygon"])]
+            logger.info("Fetched %d park features", len(gdf))
+            return gdf
+        except Exception as e:
+            logger.warning("Parks fetch failed (non-fatal): %s", e)
+            return None
 
-    try:
-        parks_gdf = _call_with_overpass_fallback(
-            ox.features_from_point,
-            center_point,
-            tags={"leisure": "park", "landuse": "grass"},
-            dist=compensated_dist,
-        )
-        parks_gdf = parks_gdf[parks_gdf.geometry.type.isin(["Polygon", "MultiPolygon"])]
-        logger.info("Fetched %d park features", len(parks_gdf))
-    except Exception as e:
-        logger.warning("Parks fetch failed (non-fatal): %s", e)
+    with ThreadPoolExecutor(max_workers=3) as pool:
+        streets_future: Future = pool.submit(_fetch_streets)
+        water_future: Future = pool.submit(_fetch_water)
+        parks_future: Future = pool.submit(_fetch_parks)
 
-    logger.info("Feature fetch took %.2fs", time.monotonic() - t_feat)
+        # Wait for streets (critical)
+        try:
+            graph = streets_future.result()
+        except MemoryError:
+            raise ValueError("Area too large — try a smaller distance")
+        except Exception as e:
+            logger.error("Street fetch failed: %s", e)
+            raise ValueError("Could not fetch street data — try a smaller distance or different city")
+
+        # Wait for water/parks (non-fatal, already caught inside helpers)
+        water_gdf = water_future.result()
+        parks_gdf = parks_future.result()
+
+    logger.info("All fetches took %.2fs", time.monotonic() - t1)
 
     # Render poster
     _set_stage("rendering")

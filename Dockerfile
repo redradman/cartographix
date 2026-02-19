@@ -47,7 +47,8 @@ COPY --from=build-emails /app/emails/dist/poster-ready.html /app/emails/poster-r
 RUN useradd -r -s /bin/false appuser && mkdir -p /app/output && chown -R appuser:appuser /app
 
 ENV PYTHONUNBUFFERED=1 \
-    ENVIRONMENT=production
+    ENVIRONMENT=production \
+    MPLCONFIGDIR=/tmp/matplotlib
 
 USER appuser
 

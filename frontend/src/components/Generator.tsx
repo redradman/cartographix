@@ -107,9 +107,13 @@ export default function Generator() {
           setAppState('error');
           return;
         }
-      } catch {
+      } catch (err) {
         pollingRef.current = null;
-        setErrorMessage('Lost connection to server');
+        if (err instanceof Error && err.message === 'JOB_EXPIRED') {
+          setErrorMessage('This job has expired — check your email for the poster or try again.');
+        } else {
+          setErrorMessage('Lost connection to server');
+        }
         setAppState('error');
         return;
       }

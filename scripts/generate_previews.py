@@ -85,7 +85,7 @@ def generate_and_download(
                 "city": city,
                 "country": country,
                 "theme": theme,
-                "distance": 10000,
+                "distance": 40000,
                 "email": "",
                 "output_format": "instagram",
                 "custom_title": "",
@@ -97,8 +97,8 @@ def generate_and_download(
 
     job_id = result["job_id"]
 
-    # Poll for completion (up to 3 minutes)
-    for _ in range(180):
+    # Poll for completion (up to 10 minutes)
+    for _ in range(600):
         time.sleep(1)
         try:
             data = api_get(f"{base_url}/api/status/{job_id}")

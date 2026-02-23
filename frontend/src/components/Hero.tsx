@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 
 const ROW_1 = [
@@ -17,6 +18,37 @@ const ROW_2 = [
   { city: 'Beijing', slug: 'beijing', theme: 'Arctic', themeId: 'arctic' },
   { city: 'Tokyo', slug: 'tokyo', theme: 'Watercolor', themeId: 'watercolor' },
 ];
+
+function PosterCard({ poster }: { poster: { city: string; slug: string; theme: string; themeId: string } }) {
+  const [loaded, setLoaded] = useState(false);
+
+  return (
+    <div className="flex-shrink-0 flex flex-col items-center">
+      <div className="relative w-44 h-60 rounded-lg overflow-hidden border border-[#E5E7EB] dark:border-[#2A2A2A] shadow-lg bg-[#F8F9FA] dark:bg-[#111111]">
+        {/* Skeleton shimmer */}
+        {!loaded && (
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 dark:via-white/5 to-transparent animate-[shimmer_1.5s_infinite] -translate-x-full" />
+          </div>
+        )}
+        <img
+          src={`/previews/${poster.slug}/${poster.themeId}.jpg`}
+          alt={`${poster.city} ${poster.theme} poster`}
+          className={`w-full h-full object-cover transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+          loading="lazy"
+          onLoad={() => setLoaded(true)}
+        />
+      </div>
+      <p className="mt-2 text-sm text-[#6B7280] dark:text-[#9CA3AF]">
+        <span className="font-medium text-[#0A0A0A] dark:text-[#F9FAFB]">{poster.city}</span>
+        {' '}
+        <span className="text-[#9CA3AF] dark:text-[#6B7280]">/</span>
+        {' '}
+        {poster.theme}
+      </p>
+    </div>
+  );
+}
 
 export default function Hero() {
   return (
@@ -54,46 +86,14 @@ export default function Hero() {
         {/* Row 1 — scrolls left */}
         <div className="flex gap-6 hover:[animation-play-state:paused] [animation:marquee_35s_linear_infinite] w-max">
           {[...ROW_1, ...ROW_1].map((poster, i) => (
-            <div key={i} className="flex-shrink-0 flex flex-col items-center">
-              <div className="w-44 h-60 rounded-lg overflow-hidden border border-[#E5E7EB] dark:border-[#2A2A2A] shadow-lg bg-[#F8F9FA] dark:bg-[#111111]">
-                <img
-                  src={`/previews/${poster.slug}/${poster.themeId}.jpg`}
-                  alt={`${poster.city} ${poster.theme} poster`}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
-              </div>
-              <p className="mt-2 text-sm text-[#6B7280] dark:text-[#9CA3AF]">
-                <span className="font-medium text-[#0A0A0A] dark:text-[#F9FAFB]">{poster.city}</span>
-                {' '}
-                <span className="text-[#9CA3AF] dark:text-[#6B7280]">/</span>
-                {' '}
-                {poster.theme}
-              </p>
-            </div>
+            <PosterCard key={i} poster={poster} />
           ))}
         </div>
 
         {/* Row 2 — scrolls right */}
         <div className="flex gap-6 mt-6 hover:[animation-play-state:paused] [animation:marquee-reverse_35s_linear_infinite] w-max">
           {[...ROW_2, ...ROW_2].map((poster, i) => (
-            <div key={i} className="flex-shrink-0 flex flex-col items-center">
-              <div className="w-44 h-60 rounded-lg overflow-hidden border border-[#E5E7EB] dark:border-[#2A2A2A] shadow-lg bg-[#F8F9FA] dark:bg-[#111111]">
-                <img
-                  src={`/previews/${poster.slug}/${poster.themeId}.jpg`}
-                  alt={`${poster.city} ${poster.theme} poster`}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
-              </div>
-              <p className="mt-2 text-sm text-[#6B7280] dark:text-[#9CA3AF]">
-                <span className="font-medium text-[#0A0A0A] dark:text-[#F9FAFB]">{poster.city}</span>
-                {' '}
-                <span className="text-[#9CA3AF] dark:text-[#6B7280]">/</span>
-                {' '}
-                {poster.theme}
-              </p>
-            </div>
+            <PosterCard key={i} poster={poster} />
           ))}
         </div>
       </motion.div>

@@ -1,8 +1,11 @@
 import asyncio
 import logging
+import multiprocessing
 import os
+import queue as _queue_mod
 import re
 import threading
+import time
 from pathlib import Path
 from typing import List
 
@@ -40,66 +43,125 @@ def _safe_filename(city: str, theme: str) -> str:
     return f"{safe_city}_{theme}_poster.png"
 
 
+def _generation_worker(
+    city: str, country: str, theme: str, distance: int,
+    output_format: str, custom_title: str, landmarks: list,
+    comm_queue: multiprocessing.Queue,
+) -> None:
+    """Run in a child process — generate poster, relay stage updates and result via queue.
+
+    When this process exits, the OS reclaims ALL its memory (graphs, GeoDataFrames,
+    matplotlib figures, etc.). This prevents the parent from accumulating RAM across
+    successive generation jobs.
+    """
+    def _on_stage(stage: str) -> None:
+        comm_queue.put(("stage", stage))
+
+    try:
+        path = generate_poster(
+            city=city, country=country, theme=theme, distance=distance,
+            output_format=output_format, custom_title=custom_title,
+            landmarks=landmarks, on_stage=_on_stage,
+        )
+        comm_queue.put(("result", path))
+    except Exception as e:
+        comm_queue.put(("error", str(e)))
+
+
 def _process_job(job_id: str) -> None:
-    """Background task to generate a poster and optionally send email."""
+    """Spawn a child process for poster generation so memory is fully reclaimed on exit."""
     job = job_store.get(job_id)
     if not job:
         return
 
-    def _update_stage(stage: str) -> None:
-        job.stage = stage
-
     job.status = "processing"
-    try:
-        result_path = generate_poster(
-            city=job.city,
-            country=job.country,
-            theme=job.theme,
-            distance=job.distance,
-            output_format=job.output_format,
-            custom_title=job.custom_title,
-            landmarks=job.landmarks,
-            on_stage=_update_stage,
-        )
-        job.result_path = result_path
 
-        if job.email:
-            _update_stage("sending_email")
+    comm_queue: multiprocessing.Queue = multiprocessing.Queue()
+    proc = multiprocessing.Process(
+        target=_generation_worker,
+        args=(job.city, job.country, job.theme, job.distance,
+              job.output_format, job.custom_title, job.landmarks, comm_queue),
+        daemon=True,
+    )
+    proc.start()
+
+    # Monitor subprocess: relay stage updates, collect result
+    result_path = None
+    error = None
+    deadline = time.monotonic() + GENERATION_TIMEOUT
+
+    while time.monotonic() < deadline:
+        try:
+            msg_type, msg_value = comm_queue.get(timeout=2)
+        except _queue_mod.Empty:
+            if not proc.is_alive():
+                break
+            continue
+
+        if msg_type == "stage":
+            job.stage = msg_value
+        elif msg_type == "result":
+            result_path = msg_value
+            break
+        elif msg_type == "error":
+            error = msg_value
+            break
+
+    # Ensure child is dead and resources freed
+    if proc.is_alive():
+        proc.kill()
+    proc.join(timeout=10)
+
+    # Drain any messages that arrived after the loop exited (race window
+    # between get() timeout and is_alive() check)
+    while True:
+        try:
+            msg_type, msg_value = comm_queue.get_nowait()
+            if msg_type == "result":
+                result_path = msg_value
+            elif msg_type == "error":
+                error = msg_value
+        except _queue_mod.Empty:
+            break
+
+    if error:
+        job.status = "failed"
+        job.error = error
+        logger.error("Job %s failed: %s", job_id, error)
+        return
+
+    if not result_path:
+        job.status = "failed"
+        job.error = f"Generation timed out after {GENERATION_TIMEOUT} seconds"
+        logger.error("Job %s timed out after %ds", job_id, GENERATION_TIMEOUT)
+        return
+
+    job.result_path = result_path
+
+    # Email is lightweight — run in parent process
+    if job.email:
+        job.stage = "sending_email"
+        try:
             send_poster_email(
-                job.email,
-                job.city,
-                result_path,
-                theme=job.theme,
-                distance=job.distance,
-                custom_title=job.custom_title,
-                output_format=job.output_format,
+                job.email, job.city, result_path,
+                theme=job.theme, distance=job.distance,
+                custom_title=job.custom_title, output_format=job.output_format,
                 landmarks=job.landmarks,
             )
+        except Exception as e:
+            logger.error("Email send failed for job %s: %s", job_id, e)
 
-        _update_stage("done")
-        job.status = "completed"
-        logger.info("Job %s completed: %s", job_id, result_path)
-
-    except Exception as e:
-        job.status = "failed"
-        job.error = str(e)
-        logger.error("Job %s failed: %s", job_id, e)
+    job.stage = "done"
+    job.status = "completed"
+    logger.info("Job %s completed: %s", job_id, result_path)
 
 
 def _run_with_semaphore(job_id: str, semaphore: asyncio.Semaphore, loop: asyncio.AbstractEventLoop) -> None:
-    """Acquire semaphore, run job with timeout, release."""
+    """Acquire semaphore, run job, release."""
     future = asyncio.run_coroutine_threadsafe(semaphore.acquire(), loop)
     future.result()  # block until slot available
     try:
-        worker = threading.Thread(target=_process_job, args=(job_id,), daemon=True)
-        worker.start()
-        worker.join(timeout=GENERATION_TIMEOUT)
-        if worker.is_alive():
-            job = job_store.get(job_id)
-            if job and job.status == "processing":
-                job.status = "failed"
-                job.error = f"Generation timed out after {GENERATION_TIMEOUT} seconds"
-                logger.error("Job %s timed out after %ds", job_id, GENERATION_TIMEOUT)
+        _process_job(job_id)
     finally:
         loop.call_soon_threadsafe(semaphore.release)
 

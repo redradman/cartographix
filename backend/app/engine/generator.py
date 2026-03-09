@@ -344,6 +344,7 @@ def generate_poster(
     # Render poster
     _set_stage("rendering")
     t2 = time.monotonic()
+    fig = None
     try:
         fig, ax = plt.subplots(figsize=figsize, facecolor=rc["bg"])
         ax.set_facecolor(rc["bg"])
@@ -476,7 +477,6 @@ def generate_poster(
             bbox_inches="tight",
             pad_inches=0.05,
         )
-        plt.close(fig)
     except ValueError:
         raise
     except MemoryError:
@@ -484,6 +484,10 @@ def generate_poster(
     except Exception as e:
         logger.exception("Rendering failed: %s", e)
         raise ValueError("Poster rendering failed — please try again")
+    finally:
+        if fig is not None:
+            plt.close(fig)
+        plt.close("all")
     logger.info("Rendering took %.2fs", time.monotonic() - t2)
 
     logger.info("Poster saved to %s", output_path)
